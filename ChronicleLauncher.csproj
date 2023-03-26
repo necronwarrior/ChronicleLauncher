@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Fonts\Minion Pro Bold.ttf" />
+    <None Remove="Fonts\Minion Pro Regular.ttf" />
+    <None Remove="Fonts\Minion Web Pro Bold.ttf" />
+    <None Remove="Images\Backgrounds\Launcher_Background.png" />
+    <None Remove="Images\Backgrounds\Play_Button.png" />
+    <None Remove="Images\Ready_Icons\Play_Failure.png" />
+    <None Remove="Images\Ready_Icons\Play_Failure_Shine.png" />
+    <None Remove="Images\Ready_Icons\Play_Success.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Fonts\Minion Pro Bold.ttf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Fonts\Minion Web Pro Bold.ttf">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Backgrounds\Launcher_Background.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Backgrounds\Play_Button.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Play_Failure.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Play_Failure_Shine.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Play_Success.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+  </ItemGroup>
+
+</Project>

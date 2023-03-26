@@ -1,0 +1,10 @@
+﻿<Application x:Class="ChronicleLauncher.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:ChronicleLauncher"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+         <FontFamily x:Key="Minion Pro">pack://application:,,,/Fonts/#Minion Pro</FontFamily>
+         <FontFamily x:Key="Minion Web Pro">pack://application:,,,/Fonts/#Minion Web Pro</FontFamily>
+    </Application.Resources>
+</Application>

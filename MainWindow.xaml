@@ -1,0 +1,64 @@
+﻿<Window x:Class="ChronicleLauncher.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChronicleLauncher"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
+        ContentRendered="Window_ContentRendered"
+        Title="Launcher" Height="700" Width="680">
+    <Grid>
+        <Image Stretch="Uniform" Source="Images/Backgrounds/Launcher_Background.png" HorizontalAlignment="Right"/>
+        <TextBlock Name="VersionText" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,0"/>
+        <StackPanel Orientation="Horizontal" Height="85" Width=" 410" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,100">
+            <StackPanel.Background>
+                <ImageBrush ImageSource="Images/Backgrounds/Play_Button.png" >
+                </ImageBrush>
+            </StackPanel.Background>
+            <Image Name="Ready_Icon_Success" Visibility="Collapsed" Source="Images/Ready_Icons/Play_Success.png" Margin="9,0,0,2" Height="85" Width="85" VerticalAlignment="Bottom"/>
+            <Grid>
+                <Image Name="Ready_Icon_Failure_Shine" Visibility="Visible" Source="Images/Ready_Icons/Play_Failure_Shine.png" Margin="9,0,0,2" Height="85" Width="85" VerticalAlignment="Bottom"/>
+                <Image Name="Ready_Icon_Failure" Source="Images/Ready_Icons/Play_Failure.png" Margin="9,0,0,2" Height="85" Width="85" VerticalAlignment="Bottom">
+                    <Image.OpacityMask>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1, 1">
+                            <LinearGradientBrush.GradientStops>
+                                <GradientStop Offset="-0.5" Color="Black"/>
+                                <GradientStop Offset="0" Color="Transparent"/>
+                                <GradientStop Offset="1.5" Color="Black"/>
+                            </LinearGradientBrush.GradientStops>
+                        </LinearGradientBrush>
+                    </Image.OpacityMask>
+                </Image>
+            </Grid>
+            <Button Name="Play_Button" Click="PlayButton_Click" Height="50" Width="300" FontFamily="{StaticResource Minion Pro}" FontWeight="Bold" Margin="0,0,0,21" Foreground="White" Background="Transparent" VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                <local:OutlinedTextBlock Stroke="Black" 
+                            ClipToBounds="True"
+                            FontSize="30" 
+                            Fill="AntiqueWhite"
+                            StrokePosition="Outside"
+                            StrokeThickness="3" Text=" Checking For Updates " Width="300">
+                </local:OutlinedTextBlock>
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>
