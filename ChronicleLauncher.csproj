@@ -5,6 +5,7 @@
     <TargetFramework>net6.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Images\Ready_Icons\Icon1024.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,9 +14,32 @@
     <None Remove="Fonts\Minion Web Pro Bold.ttf" />
     <None Remove="Images\Backgrounds\Launcher_Background.png" />
     <None Remove="Images\Backgrounds\Play_Button.png" />
+    <None Remove="Images\Ready_Icons\logo_header.png" />
     <None Remove="Images\Ready_Icons\Play_Failure.png" />
     <None Remove="Images\Ready_Icons\Play_Failure_Shine.png" />
     <None Remove="Images\Ready_Icons\Play_Success.png" />
+    <None Remove="Images\Ready_Icons\Window_Button_Background.png" />
+    <None Remove="Images\Ready_Icons\Window_Button_Single_Slot_Large.png" />
+    <None Remove="Images\Ready_Icons\Window_Close.png" />
+    <None Remove="Images\Ready_Icons\Window_Minimise.png" />
+    <None Remove="Images\Ready_Icons\Window_Title_Bar_Large_Hollow.png" />
+    <None Remove="Images\Socials\Sprite_Discord_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Fandom_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Itch_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Patreon_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Reddit_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Twitter_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Youtube_Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Syroot.Windows.IO.KnownFolders" Version="1.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\Ready_Icons\Icon1024.ico">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +55,9 @@
     <Resource Include="Images\Backgrounds\Play_Button.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\Ready_Icons\logo_header.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\Ready_Icons\Play_Failure.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -38,6 +65,42 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Play_Success.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Window_Button_Background.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Window_Button_Single_Slot_Large.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Window_Close.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Window_Minimise.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Window_Title_Bar_Large_Hollow.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Discord_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Fandom_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Itch_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Patreon_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Reddit_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Twitter_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Youtube_Logo.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

@@ -6,11 +6,60 @@
         xmlns:local="clr-namespace:ChronicleLauncher"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        Background="Transparent"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        MouseDown="Window_MouseDown"
+        Initialized="Window_Initialized"
         ContentRendered="Window_ContentRendered"
-        Title="Launcher" Height="700" Width="680">
-    <Grid>
+        Title="Launcher" Height="512" Width="512">
+    <Window.Resources>
+        <!--
+        ProgressBar with skewed Path
+        Advantages: - Moving Indicator completely reaches 100%
+                    - Moving Indicator supports transparent background
+                    - Moving Indicator shows no artifacts
+        Disadvantage: - <ControlTemplate> has to be adjusted
+                        if proportion (width-height-ratio) of ProgressBar differs from
+                        the two ones in PathGeometry, otherwise the moving Indicator alters its angle.
+        How2: Create PathGeometry ( <Path Data="..."> ) contrary to planed skew angle to skew PART_Indicator to desired angle.
+        Example: By default "PART_Indicator" is always vertical. To solely give the Indicator a 45° clockwise 'rotation' ("/"),
+                 design your Path as a 45° anti-clockwise skewed Path.
+                 For a simple Path like in these ProgressBars, you can quite easily do mental arithmetic.
+                 For more complex Path Data, you can use calculation methods in CS code...
+        -->
+        <ControlTemplate x:Key="ProgressBarPath" TargetType="ProgressBar">
+            <Viewbox Stretch="Fill">
+                <Grid HorizontalAlignment="Left" Margin="-5 0">
+                    <Path Stretch="None" x:Name="PART_Track" Fill="#811c05" RenderTransformOrigin="0,0.5" StrokeMiterLimit="1" Data="M 0,0 l 150,0 10,10 -150,0 z">
+                        <Path.RenderTransform>
+                            <SkewTransform AngleX="-45" />
+                        </Path.RenderTransform>
+                    </Path>
+                    <Path Stretch="None" x:Name="PART_Indicator" HorizontalAlignment="Left" Fill="#1256af" RenderTransformOrigin="0,0.5" StrokeMiterLimit="1" Data="M 0,0 l 150,0 10,10 -150,0 z">
+                        <Path.RenderTransform>
+                            <SkewTransform AngleX="-45" />
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+            </Viewbox>
+        </ControlTemplate>
+        <Cursor x:Key="OpenHandCursor">D:/RunescapeChronicleProject/ChronicleLauncher/Images/Ready_Icons/Sprite_UI_Cursor_Normal_64_new.cur</Cursor>
+    </Window.Resources>
+    <Grid Cursor="{StaticResource OpenHandCursor}" >
         <Image Stretch="Uniform" Source="Images/Backgrounds/Launcher_Background.png" HorizontalAlignment="Right"/>
-        <TextBlock Name="VersionText" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="White" Margin="0,0,5,0"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="30"></RowDefinition>
+                <RowDefinition></RowDefinition>
+            </Grid.RowDefinitions>
+            <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Top" Height="30" Width="Auto">
+                <Button Width="20" Height="20" Margin="5" Click="MinimiseButton_Click">_</Button>
+                <Button Width="20" Height="20" Margin="5" Click="CloseButton_Click">X</Button>
+            </WrapPanel>
+        </Grid>
+        <TextBlock Name="VersionText" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="20" Foreground="Transparent" Margin="0,0,5,0"/>
         <StackPanel Orientation="Horizontal" Height="85" Width=" 410" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,100">
             <StackPanel.Background>
                 <ImageBrush ImageSource="Images/Backgrounds/Play_Button.png" >
@@ -31,10 +80,10 @@
                     </Image.OpacityMask>
                 </Image>
             </Grid>
-            <Button Name="Play_Button" Click="PlayButton_Click" Height="50" Width="300" FontFamily="{StaticResource Minion Pro}" FontWeight="Bold" Margin="0,0,0,21" Foreground="White" Background="Transparent" VerticalAlignment="Bottom" HorizontalAlignment="Left">
-                <local:OutlinedTextBlock Stroke="Black" 
+            <Button Name="Play_Button" Click="PlayButton_Click" Height="50" Width="310" FontFamily="{StaticResource Minion Pro}" FontWeight="Bold" Margin="-15,0,0,20" Foreground="White" Background="Transparent" VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                <local:OutlinedTextBlock x:Name="Play_Button_Text" Stroke="Black" 
                             ClipToBounds="True"
-                            FontSize="30" 
+                            FontSize="18" 
                             Fill="AntiqueWhite"
                             StrokePosition="Outside"
                             StrokeThickness="3" Text=" Checking For Updates " Width="300">
@@ -60,5 +109,110 @@
                 </Button.Style>
             </Button>
         </StackPanel>
+        <Grid Width="361" Height="96" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,32">
+            <ProgressBar Name="Download_Progress" Template="{StaticResource ProgressBarPath}" HorizontalAlignment="Left"  Height="38" VerticalAlignment="Top" Width="356" Value="{Binding ElementName=Progress, Path=Value}" Margin="0,28,0,0"/>
+            <Image x:Name="Window_Title_Bar_Large_Hollow" Margin="0,28,0,0" Source="/Images/Ready_Icons/Window_Title_Bar_Large_Hollow.png" Height="50" VerticalAlignment="Top" Stretch="Fill"/>
+            <local:OutlinedTextBlock
+                            x:Name="Download_Progress_Label"
+                            Stroke="Black"
+                            FontFamily="{StaticResource Minion Web Pro}"
+                            ClipToBounds="True"
+                            FontSize="14" 
+                            Fill="AntiqueWhite"
+                            StrokePosition="Outside"
+                            StrokeThickness="2"
+                            Text=" Fetching latest version..." Margin="15,37,15,10"/>
+        </Grid>
+        <Grid Width="175" Height="50" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,0,0,0">
+            <Button BorderThickness="0" Name="Window_Close_Backgrund_Button" Margin="0,0,25,0" HorizontalAlignment="Right" Foreground="White" Background="Transparent" Click="CloseButton_Click">
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button BorderThickness="0" Name="Window_Close_Button" Margin="0,0,25,0" HorizontalAlignment="Right" Foreground="White" Background="Transparent" Click="CloseButton_Click">
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <Button Name="Window_Minimise_Background_Button" Margin="0,0,90,0" HorizontalAlignment="Right" Foreground="White" Background="Transparent" Click="MinimiseButton_Click">
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type Button}">
+                                    <Border Background="{TemplateBinding Background}">
+                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="Transparent"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </Grid>
+        <Image x:Name="Logo_header_png" Margin="110,18,94,190" Source="/Images/Ready_Icons/logo_header.png"/>
+        <Grid Margin="80,455,80,10">
+            <TextBlock>
+            <Hyperlink NavigateUri="https://chronicle-rewritten.fandom.com/wiki/Chronicle:_Rewritten_Wiki" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Fandom_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Fandom_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            <Hyperlink NavigateUri="https://www.patreon.com/chroniclerewritten" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Patreon_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Patreon_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            <Hyperlink NavigateUri="https://kapistijn.itch.io/chronicle-rewritten" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Itch_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Itch_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            <Hyperlink NavigateUri="https://www.reddit.com/r/RSChronicle/" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Reddit_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Reddit_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            <Hyperlink NavigateUri="https://www.youtube.com/@Kapistijn" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Youtube_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Youtube_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            <Hyperlink NavigateUri="https://twitter.com/questnpc" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Twitter_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Twitter_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            <Hyperlink NavigateUri="https://discord.com/invite/Z3an8y3NSu" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">
+                <Image x:Name="Discord_Logo_png" Height="45" Margin="0,0,0,0" Source="/Images/socials/Sprite_Discord_Logo.png" HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+            </Hyperlink>
+            </TextBlock>
+        </Grid>
     </Grid>
 </Window>

@@ -1,422 +1,465 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Globalization;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Security.Policy;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Markup;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
-using System.Windows.Threading;
+
+using Syroot.Windows.IO;
+
 
 namespace ChronicleLauncher
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+        private struct SLatestVersionData
+        {
+            public SLatestVersionData() { }
+            public string s_zipUrl = string.Empty;
+            public string s_unzipName = string.Empty;
+            public string s_versionName = string.Empty;
+        }
+
+        // Update this if you release a new version
+        private static readonly string CURRENT_VERSION = "1.0";
+
+        private static readonly CancellationTokenSource cancellationTokenSource = new();
+
+        static bool isDownloading = false;
+        static readonly string chronicleBaseUrl = "http://www.chroniclerewritten.com/api/";
+        private static string m_latestExecutibleLocation = string.Empty;
+
         public MainWindow()
         {
             InitializeComponent();
-            DispatcherTimer timer = new DispatcherTimer();
-            timer.Interval = TimeSpan.FromMilliseconds(35);
-            timer.Tick += timer_Tick;
-            timer.Start();
 
-            //version check for new update
+            var tempDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp");
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+
+            // Initilise our exit route for download cancellation
+            cancellationTokenSource.Token.ThrowIfCancellationRequested();
         }
 
-        // Download the latest version
-        private static async void Async_File_Download()
+        private async void Window_Initialized(object sender, EventArgs e)
         {
-            using var client = new HttpClient();
-            using var s = await client.GetStreamAsync("https://www.chroniclerewritten.com/builds/2022-11-14_Chronicle_Alpha_1.0.9.zip");
-            using var fs = new FileStream("localfile.jpg", FileMode.OpenOrCreate);
-            await s.CopyToAsync(fs);
+            SLatestVersionData latestVersionData = await GetLatestLauncherVersionAsync();
+
+            HttpClient downloadClient = new();
+
+            if (latestVersionData.s_versionName != string.Empty &&
+               latestVersionData.s_versionName != CURRENT_VERSION)
+            {
+                MessageBoxResult result = MessageBox.Show("Do you want to download the latest launcher version to your downloads folder: " + latestVersionData.s_versionName + " ?",
+                                                            "New version available!",
+                                                            MessageBoxButton.YesNo,
+                                                            MessageBoxImage.Information,
+                                                            MessageBoxResult.Yes);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    string downloadsFolder = KnownFolders.Downloads.Path;
+                    string downloadingFile = Path.Combine(downloadsFolder, latestVersionData.s_unzipName + ".zip");
+
+                    using var file = new FileStream(downloadingFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                    var progressIndicator = new Progress<float>(ReportProgress);
+
+                    Download_Progress.Maximum = 0;
+
+                    downloadClient.BaseAddress = new Uri(chronicleBaseUrl);
+                    downloadClient.DefaultRequestHeaders.Accept.Clear();
+                    downloadClient.Timeout = TimeSpan.FromMinutes(60);
+                    try
+                    {
+                        await downloadClient.DownloadAsync("https://www.chroniclerewritten.com/" + latestVersionData.s_zipUrl, file, progressIndicator, cancellationTokenSource.Token);
+                    }
+                    catch (OperationCanceledException exception)
+                    {
+                        if (cancellationTokenSource.IsCancellationRequested)
+                        {
+                            downloadClient.Dispose();
+
+                            Close();
+                            return;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Download failed due to unexpected error: " + exception);
+                        }
+                    }
+                    Close();
+                }
+            }
         }
 
-        // Delete the old version
-        bool Delete_Old_Install()
+        // Window methods
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            return true;
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                this.DragMove();
+            }
         }
 
-        private void Window_ContentRendered(object sender, EventArgs e)
+        private async void Window_ContentRendered(object sender, EventArgs e)
         {
+            SLatestVersionData latestVersionData = await GetLatestGameVersionAsync();
 
+            HttpClient downloadClient = new();
+
+            string downloadLink = "https://www.chroniclerewritten.com/" + latestVersionData.s_zipUrl;
+            string latestVersionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "version", latestVersionData.s_unzipName);
+
+            if (!Directory.Exists(latestVersionPath))
+            {
+                downloadClient.BaseAddress = new Uri(chronicleBaseUrl);
+                downloadClient.DefaultRequestHeaders.Accept.Clear();
+                downloadClient.Timeout = TimeSpan.FromMinutes(60);
+
+                var progressIndicator = new Progress<float>(ReportProgress);
+
+                string tempDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp");
+                Directory.CreateDirectory(tempDir);
+                string downloadingFile = Path.Combine(tempDir, latestVersionData.s_versionName + ".zip");
+
+                Download_Progress.Maximum = await GetFileSize(downloadLink);
+                if (File.Exists(downloadingFile))
+                {
+                    FileInfo fi = new(downloadingFile);
+                    if (fi.Length != Download_Progress.Maximum)
+                    {
+                        File.Delete(downloadingFile);
+                    }
+                }
+
+                if (!File.Exists(downloadingFile))
+                {
+                    using var file = new FileStream(downloadingFile, FileMode.Create, FileAccess.Write, FileShare.None);
+                    Play_Button_Text.Text = " Downloading Version " + latestVersionData.s_versionName;
+
+                    isDownloading = true;
+
+                    try
+                    {
+                        await downloadClient.DownloadAsync(downloadLink, file, progressIndicator, cancellationTokenSource.Token);
+                    }
+                    catch (OperationCanceledException exception)
+                    {
+                        if (cancellationTokenSource.IsCancellationRequested)
+                        {
+                            downloadClient.Dispose();
+                            file.Dispose();
+
+                            if (Directory.Exists(tempDir))
+                            {
+                                Directory.Delete(tempDir, true);
+                            }
+
+                            Close();
+                            return;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Download failed due to unexpected error: " + exception);
+                        }
+                    }
+
+                    isDownloading = false;
+                }
+                downloadClient.Dispose();
+
+                // remove all older versions
+                if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + "\\version\\"))
+                {
+                    Directory.Delete(AppDomain.CurrentDomain.BaseDirectory + "\\version\\", true);
+                }
+
+                string tempPath = Path.Combine(tempDir, latestVersionData.s_versionName + ".zip");
+                Download_Progress_Label.Text = " Extracting Files";
+                System.IO.Compression.ZipFile.ExtractToDirectory(tempPath, Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "version"));
+            }
+
+            //Update the UI to reflect the progress value that is passed back.
+            Download_Progress_Label.Text = " Chronicle Version is up to date!";
+            Play_Button_Text.Text = " Play! ";
+            Download_Progress.Value = Download_Progress.Maximum;
+            Ready_Icon_Success.Visibility = Visibility.Visible;
+            Ready_Icon_Failure.Visibility = Visibility.Collapsed;
+            Ready_Icon_Failure_Shine.Visibility = Visibility.Collapsed;
+
+            m_latestExecutibleLocation = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "version", latestVersionData.s_unzipName);
         }
 
+        // Click methods
         private void PlayButton_Click(object sender, EventArgs e)
         {
-            if (Ready_Icon_Success.IsVisible)
+            if (string.IsNullOrEmpty(m_latestExecutibleLocation))
+                return;
+
+            Play_Button_Text.Text = " Launching Chronicle... ";
+
+            try
             {
-                Ready_Icon_Success.Visibility = Visibility.Collapsed;
-                Ready_Icon_Failure.Visibility = Visibility.Visible;
-                Ready_Icon_Failure_Shine.Visibility = Visibility.Visible;
+                // Copy any prexisting decks and settings to chronicle
+                if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings")))
+                {
+                    var sourceDir = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                    sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Settings"));
+                }
+                if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks")))
+                {
+                    var sourceDir = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                    sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Decks"));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Problem copying data from Launcher to Chronicle:" + ex.ToString());
+            }
+
+            StartChronicle(m_latestExecutibleLocation).Wait();
+
+            try
+            {
+                // copy decks and settings to from chronicle version to launcher instance if they exist
+                if (Directory.Exists(Path.Combine(m_latestExecutibleLocation, "Settings")))
+                {
+                    Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                    var sourceDir = new DirectoryInfo(Path.Combine(m_latestExecutibleLocation, "Settings"));
+                    sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                }
+                if (Directory.Exists(Path.Combine(m_latestExecutibleLocation, "Decks")))
+                {
+                    Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                    var sourceDir = new DirectoryInfo(Path.Combine(m_latestExecutibleLocation, "Decks"));
+                    sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Problem copying data from Chronicle to Launcher:" + ex.ToString());
+            }
+
+            Play_Button_Text.Text = " Play! ";
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (isDownloading)
+            {
+                cancellationTokenSource.Cancel();
             }
             else
             {
-                Ready_Icon_Success.Visibility = Visibility.Visible;
-                Ready_Icon_Failure.Visibility = Visibility.Collapsed;
-                Ready_Icon_Failure_Shine.Visibility = Visibility.Collapsed;
+                string tempDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp");
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                }
+
+                Close();
             }
         }
-        void timer_Tick(object sender, EventArgs e)
+        private void MinimiseButton_Click(object sender, RoutedEventArgs e)
         {
-            if (Ready_Icon_Failure.IsVisible)
-            {
-                LinearGradientBrush linearBrush = (LinearGradientBrush)Ready_Icon_Failure.OpacityMask;
+            this.WindowState = WindowState.Minimized;
+        }
 
-                if (linearBrush.GradientStops[1].Offset >= 1.4)
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            System.Diagnostics.Process.Start(new ProcessStartInfo
+            {
+                FileName = e.Uri.ToString(),
+                UseShellExecute = true
+            });
+        }
+
+        // Functional Methods
+        void ReportProgress(float value)
+        {
+            //Update the UI to reflect the progress value that is passed back.
+            Download_Progress_Label.Text = " " + Math.Truncate(((value / Download_Progress.Maximum) * 100)).ToString() + "%";
+            Download_Progress.Value = value;
+        }
+
+        private static async Task<SLatestVersionData> GetLatestGameVersionAsync()
+        {
+            SLatestVersionData returnData = new();
+
+            HttpClient versionClient = new()
+            {
+                BaseAddress = new Uri(chronicleBaseUrl)
+            };
+            versionClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+
+            var requestData = new { route = "getgameversions" };
+            var jsonContent = JsonSerializer.Serialize(requestData);
+            var requestContent = new StringContent($"data={Uri.EscapeDataString(jsonContent)}", Encoding.UTF8, "application/x-www-form-urlencoded");
+
+            HttpResponseMessage response = await versionClient.PostAsync("", requestContent);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonString = await response.Content.ReadAsStringAsync();
+
+                JsonNode? jo = JsonNode.Parse(jsonString);
+                if (jo != null)
                 {
-                    linearBrush.GradientStops[1].Offset = -0.5;
-                }
-                else
-                {
-                    linearBrush.GradientStops[1].Offset += 0.1;
+                    JsonNode? gameVersions = jo["game_versions"];
+                    if (gameVersions != null)
+                    {
+                        JsonArray gameVersionArray = gameVersions.AsArray();
+                        if (gameVersionArray != null)
+                        {
+                            JsonNode? latestGameVersion = gameVersionArray.LastOrDefault();
+                            if (latestGameVersion != null)
+                            {
+                                JsonNode? urlNode = latestGameVersion["url"];
+                                if (urlNode != null)
+                                {
+                                    returnData.s_zipUrl = urlNode.GetValue<string>();
+                                    int pFrom = returnData.s_zipUrl.LastIndexOf("/") + 1;
+                                    int pTo = returnData.s_zipUrl.LastIndexOf(".");
+                                    returnData.s_unzipName = returnData.s_zipUrl[pFrom..pTo];
+                                }
+
+                                JsonNode? nameNode = latestGameVersion["name"];
+                                if (nameNode != null)
+                                {
+                                    returnData.s_versionName = nameNode.GetValue<string>();
+                                }
+                            }
+                        }
+                    }
                 }
             }
+            versionClient.Dispose();
+            return returnData;
         }
-    }
 
-    public enum StrokePosition
-    {
-        Center,
-        Outside,
-        Inside
-    }
-
-    [ContentProperty("Text")]
-    public class OutlinedTextBlock : FrameworkElement
-    {
-        private void UpdatePen()
+        public static async Task<long> GetFileSize(string url)
         {
-            _Pen = new Pen(Stroke, StrokeThickness)
+            try
             {
-                DashCap = PenLineCap.Round,
-                EndLineCap = PenLineCap.Round,
-                LineJoin = PenLineJoin.Round,
-                StartLineCap = PenLineCap.Round
+                using HttpClient httpClient = new();
+                httpClient.DefaultRequestHeaders.Clear();
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36");
+
+                HttpResponseMessage response = await httpClient.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
+                if (response.IsSuccessStatusCode)
+                {
+                    if (response.Content.Headers.ContentLength != null)
+                    {
+                        return (long)response.Content.Headers.ContentLength;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while retrieving the file size: {ex.Message}");
+            }
+
+            return -1; // Return -1 if the file size couldn't be retrieved
+        }
+
+        private async Task StartChronicle(string latestExecutableLocation)
+        {
+            // Use ProcessStartInfo class
+            var startInfo = new ProcessStartInfo
+            {
+                WorkingDirectory = latestExecutableLocation,
+                CreateNoWindow = true,
+                UseShellExecute = true,
+                FileName = Path.Combine(latestExecutableLocation, "Chronicle.exe")
             };
 
-            if (StrokePosition == StrokePosition.Outside || StrokePosition == StrokePosition.Inside)
+            try
             {
-                _Pen.Thickness = StrokeThickness * 2;
+                // Start the process with the info we specified.
+                // Call WaitForExit and then the using statement will close.
+                if (startInfo != null)
+                {
+                    var exeProcess = Process.Start(startInfo)
+                        ?? throw new ArgumentException(latestExecutableLocation);
+
+                    Play_Button_Text.Text = " Chronicle Launched ";
+                    await exeProcess.WaitForExitAsync().ConfigureAwait(false);
+                }
             }
-
-            InvalidateVisual();
-        }
-
-        public StrokePosition StrokePosition
-        {
-            get { return (StrokePosition)GetValue(StrokePositionProperty); }
-            set { SetValue(StrokePositionProperty, value); }
-        }
-
-        public static readonly DependencyProperty StrokePositionProperty =
-            DependencyProperty.Register("StrokePosition",
-                typeof(StrokePosition),
-                typeof(OutlinedTextBlock),
-                new FrameworkPropertyMetadata(StrokePosition.Outside, FrameworkPropertyMetadataOptions.AffectsRender));
-
-        public static readonly DependencyProperty FillProperty = DependencyProperty.Register(
-          "Fill",
-          typeof(Brush),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(Brushes.Black, FrameworkPropertyMetadataOptions.AffectsRender));
-
-        public static readonly DependencyProperty StrokeProperty = DependencyProperty.Register(
-          "Stroke",
-          typeof(Brush),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(Brushes.Black, FrameworkPropertyMetadataOptions.AffectsRender));
-
-        public static readonly DependencyProperty StrokeThicknessProperty = DependencyProperty.Register(
-          "StrokeThickness",
-          typeof(double),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(1d, FrameworkPropertyMetadataOptions.AffectsRender));
-
-        public static readonly DependencyProperty FontFamilyProperty = TextElement.FontFamilyProperty.AddOwner(
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty FontSizeProperty = TextElement.FontSizeProperty.AddOwner(
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty FontStretchProperty = TextElement.FontStretchProperty.AddOwner(
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty FontStyleProperty = TextElement.FontStyleProperty.AddOwner(
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty FontWeightProperty = TextElement.FontWeightProperty.AddOwner(
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty TextProperty = DependencyProperty.Register(
-          "Text",
-          typeof(string),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextInvalidated));
-
-        public static readonly DependencyProperty TextAlignmentProperty = DependencyProperty.Register(
-          "TextAlignment",
-          typeof(TextAlignment),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty TextDecorationsProperty = DependencyProperty.Register(
-          "TextDecorations",
-          typeof(TextDecorationCollection),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty TextTrimmingProperty = DependencyProperty.Register(
-          "TextTrimming",
-          typeof(TextTrimming),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(OnFormattedTextUpdated));
-
-        public static readonly DependencyProperty TextWrappingProperty = DependencyProperty.Register(
-          "TextWrapping",
-          typeof(TextWrapping),
-          typeof(OutlinedTextBlock),
-          new FrameworkPropertyMetadata(TextWrapping.NoWrap, OnFormattedTextUpdated));
-
-        private FormattedText _FormattedText;
-        private Geometry _TextGeometry;
-        private Pen _Pen;
-        private PathGeometry _clipGeometry;
-
-        public Brush Fill
-        {
-            get { return (Brush)GetValue(FillProperty); }
-            set { SetValue(FillProperty, value); }
-        }
-
-        public FontFamily FontFamily
-        {
-            get { return (FontFamily)GetValue(FontFamilyProperty); }
-            set { SetValue(FontFamilyProperty, value); }
-        }
-
-        [TypeConverter(typeof(FontSizeConverter))]
-        public double FontSize
-        {
-            get { return (double)GetValue(FontSizeProperty); }
-            set { SetValue(FontSizeProperty, value); }
-        }
-
-        public FontStretch FontStretch
-        {
-            get { return (FontStretch)GetValue(FontStretchProperty); }
-            set { SetValue(FontStretchProperty, value); }
-        }
-
-        public FontStyle FontStyle
-        {
-            get { return (FontStyle)GetValue(FontStyleProperty); }
-            set { SetValue(FontStyleProperty, value); }
-        }
-
-        public FontWeight FontWeight
-        {
-            get { return (FontWeight)GetValue(FontWeightProperty); }
-            set { SetValue(FontWeightProperty, value); }
-        }
-
-        public Brush Stroke
-        {
-            get { return (Brush)GetValue(StrokeProperty); }
-            set { SetValue(StrokeProperty, value); }
-        }
-
-        public double StrokeThickness
-        {
-            get { return (double)GetValue(StrokeThicknessProperty); }
-            set { SetValue(StrokeThicknessProperty, value); }
-        }
-
-        public string Text
-        {
-            get { return (string)GetValue(TextProperty); }
-            set { SetValue(TextProperty, value); }
-        }
-
-        public TextAlignment TextAlignment
-        {
-            get { return (TextAlignment)GetValue(TextAlignmentProperty); }
-            set { SetValue(TextAlignmentProperty, value); }
-        }
-
-        public TextDecorationCollection TextDecorations
-        {
-            get { return (TextDecorationCollection)GetValue(TextDecorationsProperty); }
-            set { SetValue(TextDecorationsProperty, value); }
-        }
-
-        public TextTrimming TextTrimming
-        {
-            get { return (TextTrimming)GetValue(TextTrimmingProperty); }
-            set { SetValue(TextTrimmingProperty, value); }
-        }
-
-        public TextWrapping TextWrapping
-        {
-            get { return (TextWrapping)GetValue(TextWrappingProperty); }
-            set { SetValue(TextWrappingProperty, value); }
-        }
-
-        public OutlinedTextBlock()
-        {
-            UpdatePen();
-            TextDecorations = new TextDecorationCollection();
-        }
-
-        protected override void OnRender(DrawingContext drawingContext)
-        {
-            EnsureGeometry();
-
-            drawingContext.DrawGeometry(Fill, null, _TextGeometry);
-
-            if (StrokePosition == StrokePosition.Outside)
+            catch (Exception ex)
             {
-                drawingContext.PushClip(_clipGeometry);
-            }
-            else if (StrokePosition == StrokePosition.Inside)
-            {
-                drawingContext.PushClip(_TextGeometry);
-            }
-
-            drawingContext.DrawGeometry(null, _Pen, _TextGeometry);
-
-            if (StrokePosition == StrokePosition.Outside || StrokePosition == StrokePosition.Inside)
-            {
-                drawingContext.Pop();
+                Console.WriteLine("Problem launching Chronicle: " + ex.ToString());
             }
         }
 
-        protected override Size MeasureOverride(Size availableSize)
+        private static async Task<SLatestVersionData> GetLatestLauncherVersionAsync()
         {
-            EnsureFormattedText();
-
-            // constrain the formatted text according to the available size
-
-            double w = availableSize.Width;
-            double h = availableSize.Height;
-
-            // the Math.Min call is important - without this constraint (which seems arbitrary, but is the maximum allowable text width), things blow up when availableSize is infinite in both directions
-            // the Math.Max call is to ensure we don't hit zero, which will cause MaxTextHeight to throw
-            _FormattedText.MaxTextWidth = Math.Min(3579139, w);
-            _FormattedText.MaxTextHeight = Math.Max(0.0001d, h);
-
-            // return the desired size
-            return new Size(Math.Ceiling(_FormattedText.Width), Math.Ceiling(_FormattedText.Height));
-        }
-
-        protected override Size ArrangeOverride(Size finalSize)
-        {
-            EnsureFormattedText();
-
-            // update the formatted text with the final size
-            _FormattedText.MaxTextWidth = finalSize.Width;
-            _FormattedText.MaxTextHeight = Math.Max(0.0001d, finalSize.Height);
-
-            // need to re-generate the geometry now that the dimensions have changed
-            _TextGeometry = null;
-            UpdatePen();
-
-            return finalSize;
-        }
-
-        private static void OnFormattedTextInvalidated(DependencyObject dependencyObject,
-          DependencyPropertyChangedEventArgs e)
-        {
-            var outlinedTextBlock = (OutlinedTextBlock)dependencyObject;
-            outlinedTextBlock._FormattedText = null;
-            outlinedTextBlock._TextGeometry = null;
-
-            outlinedTextBlock.InvalidateMeasure();
-            outlinedTextBlock.InvalidateVisual();
-        }
-
-        private static void OnFormattedTextUpdated(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
-        {
-            var outlinedTextBlock = (OutlinedTextBlock)dependencyObject;
-            outlinedTextBlock.UpdateFormattedText();
-            outlinedTextBlock._TextGeometry = null;
-
-            outlinedTextBlock.InvalidateMeasure();
-            outlinedTextBlock.InvalidateVisual();
-        }
-
-        private void EnsureFormattedText()
-        {
-            if (_FormattedText != null)
+            SLatestVersionData returnData = new();
+            HttpClient versionClient = new();
+            try
             {
-                return;
+                versionClient.BaseAddress = new Uri(chronicleBaseUrl);
+                versionClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/x-www-form-urlencoded"));
+
+                var requestData = new { route = "getlauncherversions" };
+                var jsonContent = JsonSerializer.Serialize(requestData);
+                var requestContent = new StringContent($"data={Uri.EscapeDataString(jsonContent)}", Encoding.UTF8, "application/x-www-form-urlencoded");
+                
+                HttpResponseMessage response = await versionClient.PostAsync("", requestContent);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonString = await response.Content.ReadAsStringAsync();
+
+                    JsonNode? jo = JsonNode.Parse(jsonString);
+                    if (jo != null)
+                    {
+                        JsonNode? gameVersions = jo["launcher_versions"];
+                        if (gameVersions != null)
+                        {
+                            JsonArray gameVersionArray = gameVersions.AsArray();
+                            if (gameVersionArray != null)
+                            {
+                                JsonNode? latestGameVersion = gameVersionArray.LastOrDefault();
+                                if (latestGameVersion != null)
+                                {
+                                    JsonNode? urlNode = latestGameVersion["url"];
+                                    if (urlNode != null)
+                                    {
+                                        returnData.s_zipUrl = urlNode.GetValue<string>();
+                                        int pFrom = returnData.s_zipUrl.LastIndexOf("/") + 1;
+                                        returnData.s_unzipName = returnData.s_zipUrl[pFrom..returnData.s_zipUrl.Length];
+                                    }
+
+                                    JsonNode? nameNode = latestGameVersion["name"];
+                                    if (nameNode != null)
+                                    {
+                                        returnData.s_versionName = nameNode.GetValue<string>();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-
-            _FormattedText = new FormattedText(
-              Text ?? "",
-              CultureInfo.CurrentUICulture,
-              FlowDirection,
-              new Typeface(FontFamily, FontStyle, FontWeight, FontStretch),
-              FontSize,
-              Brushes.Black);
-
-            UpdateFormattedText();
-        }
-
-        private void UpdateFormattedText()
-        {
-            if (_FormattedText == null)
+            catch (Exception ex)
             {
-                return;
+                Console.WriteLine($"An error occurred while retrieving the file size: {ex.Message}");
             }
+            versionClient.Dispose();
 
-            _FormattedText.MaxLineCount = TextWrapping == TextWrapping.NoWrap ? 1 : int.MaxValue;
-            _FormattedText.TextAlignment = TextAlignment;
-            _FormattedText.Trimming = TextTrimming;
-
-            _FormattedText.SetFontSize(FontSize);
-            _FormattedText.SetFontStyle(FontStyle);
-            _FormattedText.SetFontWeight(FontWeight);
-            _FormattedText.SetFontFamily(FontFamily);
-            _FormattedText.SetFontStretch(FontStretch);
-            _FormattedText.SetTextDecorations(TextDecorations);
-        }
-
-        private void EnsureGeometry()
-        {
-            if (_TextGeometry != null)
-            {
-                return;
-            }
-
-            EnsureFormattedText();
-            _TextGeometry = _FormattedText.BuildGeometry(new Point(0, 0));
-
-            if (StrokePosition == StrokePosition.Outside)
-            {
-                var boundsGeo = new RectangleGeometry(new Rect(0, 0, ActualWidth, ActualHeight));
-                _clipGeometry = Geometry.Combine(boundsGeo, _TextGeometry, GeometryCombineMode.Exclude, null);
-            }
+            return returnData;
         }
     }
 }
