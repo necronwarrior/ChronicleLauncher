@@ -45,9 +45,8 @@
                 </Grid>
             </Viewbox>
         </ControlTemplate>
-        <Cursor x:Key="OpenHandCursor">D:/RunescapeChronicleProject/ChronicleLauncher/Images/Ready_Icons/Sprite_UI_Cursor_Normal_64_new.cur</Cursor>
     </Window.Resources>
-    <Grid Cursor="{StaticResource OpenHandCursor}" >
+    <Grid>
         <Image Stretch="Uniform" Source="Images/Backgrounds/Launcher_Background.png" HorizontalAlignment="Right"/>
         <Grid>
             <Grid.RowDefinitions>

@@ -18,6 +18,7 @@
     <None Remove="Images\Ready_Icons\Play_Failure.png" />
     <None Remove="Images\Ready_Icons\Play_Failure_Shine.png" />
     <None Remove="Images\Ready_Icons\Play_Success.png" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Cursor_Normal_64_new.cur" />
     <None Remove="Images\Ready_Icons\Window_Button_Background.png" />
     <None Remove="Images\Ready_Icons\Window_Button_Single_Slot_Large.png" />
     <None Remove="Images\Ready_Icons\Window_Close.png" />
@@ -65,6 +66,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Play_Success.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Cursor_Normal_64_new.cur">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Window_Button_Background.png">

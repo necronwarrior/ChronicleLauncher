@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Navigation;
-
+using System.Windows.Resources;
 using Syroot.Windows.IO;
 
 
@@ -41,6 +41,9 @@ namespace ChronicleLauncher
         public MainWindow()
         {
             InitializeComponent();
+
+            StreamResourceInfo streamResource = Application.GetResourceStream(new Uri("Images/Ready_Icons/Sprite_UI_Cursor_Normal_64_new.cur", UriKind.Relative));
+            Cursor = new Cursor(streamResource.Stream);
 
             var tempDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "temp");
             if (Directory.Exists(tempDir))
