@@ -14,6 +14,7 @@
     <None Remove="Fonts\Minion Web Pro Bold.ttf" />
     <None Remove="Images\Backgrounds\Launcher_Background.png" />
     <None Remove="Images\Backgrounds\Play_Button.png" />
+    <None Remove="Images\Backgrounds\Splash.jpg" />
     <None Remove="Images\Ready_Icons\logo_header.png" />
     <None Remove="Images\Ready_Icons\Play_Failure.png" />
     <None Remove="Images\Ready_Icons\Play_Failure_Shine.png" />
@@ -24,6 +25,7 @@
     <None Remove="Images\Ready_Icons\Window_Close.png" />
     <None Remove="Images\Ready_Icons\Window_Minimise.png" />
     <None Remove="Images\Ready_Icons\Window_Title_Bar_Large_Hollow.png" />
+    <None Remove="Images\Socials\Sprite_Chronicle_Website_Logo.png" />
     <None Remove="Images\Socials\Sprite_Discord_Logo.png" />
     <None Remove="Images\Socials\Sprite_Fandom_Logo.png" />
     <None Remove="Images\Socials\Sprite_Itch_Logo.png" />
@@ -38,6 +40,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="Images\Backgrounds\Splash.jpg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\Ready_Icons\Icon1024.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -84,6 +89,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Window_Title_Bar_Large_Hollow.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Chronicle_Website_Logo.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Socials\Sprite_Discord_Logo.png">

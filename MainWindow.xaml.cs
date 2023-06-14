@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -14,8 +13,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Navigation;
 using System.Windows.Resources;
-using Syroot.Windows.IO;
-
 
 namespace ChronicleLauncher
 {
@@ -30,7 +27,9 @@ namespace ChronicleLauncher
         }
 
         // Update this if you release a new version
-        private static readonly string CURRENT_VERSION = "1.0";
+        // OLD VERSIONS
+        // "Launcher Alpha 1.0.0"
+        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.1";
 
         private static readonly CancellationTokenSource cancellationTokenSource = new();
 
@@ -41,6 +40,8 @@ namespace ChronicleLauncher
         public MainWindow()
         {
             InitializeComponent();
+
+            VersionText.Text = CURRENT_VERSION;
 
             StreamResourceInfo streamResource = Application.GetResourceStream(new Uri("Images/Ready_Icons/Sprite_UI_Cursor_Normal_64_new.cur", UriKind.Relative));
             Cursor = new Cursor(streamResource.Stream);
@@ -55,57 +56,6 @@ namespace ChronicleLauncher
             cancellationTokenSource.Token.ThrowIfCancellationRequested();
         }
 
-        private async void Window_Initialized(object sender, EventArgs e)
-        {
-            SLatestVersionData latestVersionData = await GetLatestLauncherVersionAsync();
-
-            HttpClient downloadClient = new();
-
-            if (latestVersionData.s_versionName != string.Empty &&
-               latestVersionData.s_versionName != CURRENT_VERSION)
-            {
-                MessageBoxResult result = MessageBox.Show("Do you want to download the latest launcher version to your downloads folder: " + latestVersionData.s_versionName + " ?",
-                                                            "New version available!",
-                                                            MessageBoxButton.YesNo,
-                                                            MessageBoxImage.Information,
-                                                            MessageBoxResult.Yes);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    string downloadsFolder = KnownFolders.Downloads.Path;
-                    string downloadingFile = Path.Combine(downloadsFolder, latestVersionData.s_unzipName + ".zip");
-
-                    using var file = new FileStream(downloadingFile, FileMode.Create, FileAccess.Write, FileShare.None);
-                    var progressIndicator = new Progress<float>(ReportProgress);
-
-                    Download_Progress.Maximum = 0;
-
-                    downloadClient.BaseAddress = new Uri(chronicleBaseUrl);
-                    downloadClient.DefaultRequestHeaders.Accept.Clear();
-                    downloadClient.Timeout = TimeSpan.FromMinutes(60);
-                    try
-                    {
-                        await downloadClient.DownloadAsync("https://www.chroniclerewritten.com/" + latestVersionData.s_zipUrl, file, progressIndicator, cancellationTokenSource.Token);
-                    }
-                    catch (OperationCanceledException exception)
-                    {
-                        if (cancellationTokenSource.IsCancellationRequested)
-                        {
-                            downloadClient.Dispose();
-
-                            Close();
-                            return;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Download failed due to unexpected error: " + exception);
-                        }
-                    }
-                    Close();
-                }
-            }
-        }
-
         // Window methods
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -117,6 +67,29 @@ namespace ChronicleLauncher
 
         private async void Window_ContentRendered(object sender, EventArgs e)
         {
+            SLatestVersionData latestLauncherVersionData = await GetLatestLauncherVersionAsync();
+
+            if (latestLauncherVersionData.s_versionName != string.Empty &&
+               latestLauncherVersionData.s_versionName != CURRENT_VERSION)
+            {
+                MessageBoxResult result = MessageBox.Show("Do you want to download the latest launcher version to your downloads folder: " + latestLauncherVersionData.s_versionName + " ?",
+                                                            "New version available!",
+                                                            MessageBoxButton.YesNo,
+                                                            MessageBoxImage.Information,
+                                                            MessageBoxResult.Yes);
+
+                if (result == MessageBoxResult.Yes)
+                {
+
+                    System.Diagnostics.Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "http://www.chroniclerewritten.com/",
+                        UseShellExecute = true
+                    });
+                    Close();
+                }
+            }
+
             SLatestVersionData latestVersionData = await GetLatestGameVersionAsync();
 
             HttpClient downloadClient = new();
