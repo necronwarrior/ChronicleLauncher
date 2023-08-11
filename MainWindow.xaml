@@ -10,6 +10,7 @@
         ResizeMode="NoResize"
         MouseDown="Window_MouseDown"
         ContentRendered="Window_ContentRendered"
+        Closing="Window_Closing"
         Title="Launcher" Height="480" Width="925">
     <Window.Resources>
         <!--
@@ -42,12 +43,30 @@
                 </Grid>
             </Viewbox>
         </ControlTemplate>
+        <Style x:Key="TransparentButtonStyle" TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid>
-        <Image Stretch="Fill" Source="Images/Backgrounds/Splash.jpg" HorizontalAlignment="Right"/>
+        <Image Name="SplashBackground" Stretch="Fill" Source="Images/Backgrounds/Splash.jpg" HorizontalAlignment="Right"/>
         <Grid>
             <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Top" Height="30" Width="Auto">
-                <Button Width="30" Height="30" Foreground="AntiqueWhite" BorderThickness="0" Background="Transparent" FontSize="20"  Margin="0,0,0,0" Click="MinimiseButton_Click">_</Button>
+                <Button Width="30" Foreground="AntiqueWhite" BorderThickness="0" Background="Transparent" FontSize="20"  Click="TestButton_Click">🧪</Button>
+                <Button Width="30" Height="30" Foreground="AntiqueWhite" BorderThickness="0" Background="Transparent" FontSize="20" Margin="0,0,0,0" Click="MinimiseButton_Click">_</Button>
                 <Button Width="30" Foreground="AntiqueWhite" BorderThickness="0" Background="Transparent" FontSize="20"  Click="CloseButton_Click">X</Button>
             </WrapPanel>
         </Grid>
@@ -70,7 +89,7 @@
                     </Image.OpacityMask>
                 </Image>
             </Grid>
-            <Button Name="Play_Button" Click="PlayButton_Click" Height="50" Width="340" FontFamily="{StaticResource Minion Pro}" FontWeight="Bold" Margin="-11,0,0,20" Foreground="White" Background="Transparent" VerticalAlignment="Bottom">
+            <Button Name="Play_Button" Click="PlayButton_Click" Height="50" Width="340" Style="{StaticResource TransparentButtonStyle}" FontFamily="{StaticResource Minion Pro}" FontWeight="Bold" Margin="-11,0,0,20" Foreground="White" Background="Transparent" VerticalAlignment="Bottom">
                 <local:OutlinedTextBlock x:Name="Play_Button_Text" Stroke="Black" 
                             ClipToBounds="True"
                             FontSize="20" 
@@ -78,25 +97,6 @@
                             StrokePosition="Outside"
                             StrokeThickness="2.5" Text=" Checking For Updates " Width="330">
                 </local:OutlinedTextBlock>
-                <Button.Style>
-                    <Style TargetType="{x:Type Button}">
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="{x:Type Button}">
-                                    <Border Background="{TemplateBinding Background}">
-                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="Transparent"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
             </Button>
         </StackPanel>
         <Grid Width="356" Height="49" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,10,100">
@@ -115,6 +115,23 @@
                             Text=" Fetching latest version..." Margin="0,6,0,5"/>
         </Grid>
         <Image x:Name="Logo_header_png" Margin="515,88,10,232" Source="/Images/Ready_Icons/logo_header.png"/>
+        <Grid x:Name="Testing_Text" Visibility="Hidden">
+            <local:OutlinedTextBlock  Stroke="Black" 
+                            ClipToBounds="True"
+                            FontSize="30" 
+                            Fill="AntiqueWhite"
+                            StrokePosition="Outside"
+                            StrokeThickness="3" Text=" TESTING " Margin="741,186,52,245" RenderTransformOrigin="0.5,0.5">
+                <local:OutlinedTextBlock.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform/>
+                        <SkewTransform/>
+                        <RotateTransform Angle="-14.852"/>
+                        <TranslateTransform/>
+                    </TransformGroup>
+                </local:OutlinedTextBlock.RenderTransform>
+            </local:OutlinedTextBlock>
+        </Grid>
         <Grid Margin="0,436,650,0" HorizontalAlignment="Right" Width="265">
             <TextBlock>
             <Hyperlink NavigateUri="https://www.chroniclerewritten.com/" TextDecorations="None" RequestNavigate="Hyperlink_RequestNavigate">

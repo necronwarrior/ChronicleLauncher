@@ -15,6 +15,7 @@
     <None Remove="Images\Backgrounds\Launcher_Background.png" />
     <None Remove="Images\Backgrounds\Play_Button.png" />
     <None Remove="Images\Backgrounds\Splash.jpg" />
+    <None Remove="Images\Backgrounds\TestingSplash.jpg" />
     <None Remove="Images\Ready_Icons\logo_header.png" />
     <None Remove="Images\Ready_Icons\Play_Failure.png" />
     <None Remove="Images\Ready_Icons\Play_Failure_Shine.png" />
@@ -43,6 +44,9 @@
     <Resource Include="Images\Backgrounds\Splash.jpg">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\Backgrounds\TestingSplash.jpg">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\Ready_Icons\Icon1024.ico">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -53,9 +57,6 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Fonts\Minion Web Pro Bold.ttf">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\Backgrounds\Launcher_Background.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Backgrounds\Play_Button.png">
