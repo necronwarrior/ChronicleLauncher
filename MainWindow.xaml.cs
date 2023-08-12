@@ -21,21 +21,24 @@ namespace ChronicleLauncher
 {
     public partial class MainWindow : Window
     {
-        private struct SLatestVersionData
+        private struct SVersionData
         {
-            public SLatestVersionData() { }
-            public string s_zipUrl = string.Empty;
+            public SVersionData() { }
+            public string s_versionString = string.Empty;
+            public string s_zipName = string.Empty;
             public string s_unzipName = string.Empty;
-            public string s_versionName = string.Empty;
         }
-        static SLatestVersionData currentlatestVersionData;
+        /*
+        static SLatestVersionData currentlatestVersionData;*/
 
         // Update this if you release a new version
         // OLD VERSIONS
         // "Launcher Alpha 1.0.0"
-        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.2";
+        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.3";
 
         private static CancellationTokenSource cancellationTokenSource = new();
+        static private string m_versionID = string.Empty;
+        static private string m_versionString = string.Empty;
 
         static bool isDownloading = false;
         static bool readyToDownload = false;
@@ -43,8 +46,8 @@ namespace ChronicleLauncher
         static string chronicleApiUrl = "http://www.chroniclerewritten.com/api/";
         private static string m_latestExecutibleLocation = string.Empty;
 
-        LauncherSettings settingsManager;
-        Settings currentLauncherSettings;
+        private LauncherSettings settingsManager;
+        private Settings currentLauncherSettings;
         public MainWindow()
         {
             InitializeComponent();
@@ -107,12 +110,12 @@ namespace ChronicleLauncher
 
         private async void Window_ContentRendered(object sender, EventArgs e)
         {
-            SLatestVersionData latestLauncherVersionData = await GetLatestLauncherVersionAsync();
+            SVersionData latestLauncherVersionData = await GetLatestLauncherVersionAsync();
 
-            if (latestLauncherVersionData.s_versionName != string.Empty &&
-               latestLauncherVersionData.s_versionName != CURRENT_VERSION)
+            if (latestLauncherVersionData.s_versionString != string.Empty &&
+                latestLauncherVersionData.s_versionString != CURRENT_VERSION)
             {
-                MessageBoxResult result = MessageBox.Show("Do you want to download the latest launcher version? : " + latestLauncherVersionData.s_versionName + " ?",
+                MessageBoxResult result = MessageBox.Show("Do you want to download the latest launcher version? : " + latestLauncherVersionData.s_versionString + " ?",
                                                             "New version available!",
                                                             MessageBoxButton.YesNo,
                                                             MessageBoxImage.Information,
@@ -132,14 +135,15 @@ namespace ChronicleLauncher
 
             CheckGameVersionAsync();
         }
+
         private async void CheckGameVersionAsync()
         {
-            currentlatestVersionData = await GetLatestGameVersionAsync();
-            string latestVersionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, (currentLauncherSettings.isTesting ? "versionTESTING" : "version"), currentlatestVersionData.s_unzipName);
+            SVersionData gameVersionData = await GetLatestGameVersionAsync();
+            string latestVersionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, (currentLauncherSettings.isTesting ? "versionTESTING" : "version"), gameVersionData.s_unzipName);
 
             if (!Directory.Exists(latestVersionPath))
             {
-                Download_Progress_Label.Text = " Click to download chronicle version:" + currentlatestVersionData.s_versionName;
+                Download_Progress_Label.Text = " Click to download chronicle version:" + gameVersionData.s_versionString;
                 Play_Button_Text.Text = " New version available! ";
                 Download_Progress.Value = Download_Progress.Minimum;
                 Ready_Icon_Success.Visibility = Visibility.Collapsed;
@@ -168,7 +172,8 @@ namespace ChronicleLauncher
         {
             HttpClient downloadClient = new();
 
-            string downloadLink = chronicleBaseUrl + currentlatestVersionData.s_zipUrl;
+            SVersionData gameData = await GetGameUrlAsync(m_versionID);
+            string downloadLink = chronicleBaseUrl + gameData.s_zipName;
 
             downloadClient.BaseAddress = new Uri(chronicleApiUrl);
             downloadClient.DefaultRequestHeaders.Accept.Clear();
@@ -178,7 +183,7 @@ namespace ChronicleLauncher
 
             string tempDir = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "\\tempTESTING\\" : "\\temp\\");
             Directory.CreateDirectory(tempDir);
-            string downloadingFile = Path.Combine(tempDir, currentlatestVersionData.s_versionName + ".zip");
+            string downloadingFile = Path.Combine(tempDir, m_versionString + ".zip");
 
             Download_Progress.Maximum = await GetFileSizeAsync(downloadLink);
             if (File.Exists(downloadingFile) && new FileInfo(downloadingFile).Length != Download_Progress.Maximum)
@@ -186,11 +191,10 @@ namespace ChronicleLauncher
                 File.Delete(downloadingFile);
             }
 
-
             if (!File.Exists(downloadingFile))
             {
                 using var file = new FileStream(downloadingFile, FileMode.Create, FileAccess.Write, FileShare.None);
-                Play_Button_Text.Text = " Downloading Version " + currentlatestVersionData.s_versionName;
+                Play_Button_Text.Text = " Downloading Version " + m_versionString;
 
                 isDownloading = true;
 
@@ -231,7 +235,7 @@ namespace ChronicleLauncher
             var extractionLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "versionTESTING\\" : "version\\");
             Directory.CreateDirectory(extractionLocation);
 
-            string tempPath = Path.Combine(tempDir, currentlatestVersionData.s_versionName + ".zip");
+            string tempPath = Path.Combine(tempDir, m_versionString + ".zip");
             Download_Progress_Label.Text = " Extracting Files";
             System.IO.Compression.ZipFile.ExtractToDirectory(tempPath, extractionLocation);
 
@@ -245,7 +249,12 @@ namespace ChronicleLauncher
 
             readyToDownload = false;
 
-            m_latestExecutibleLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "versionTESTING\\" : "version\\") + currentlatestVersionData.s_unzipName;
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+
+            m_latestExecutibleLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "versionTESTING\\" : "version\\") + gameData.s_unzipName;
         }
 
         private void PlayButtonWrapper()
@@ -299,6 +308,7 @@ namespace ChronicleLauncher
 
             Play_Button_Text.Text = " Play! ";
         }
+
         private void TestToggle()
         {
             if (currentLauncherSettings.isTesting)
@@ -347,18 +357,18 @@ namespace ChronicleLauncher
                 Close();
             }
         }
+
         private void MinimiseButton_Click(object sender, RoutedEventArgs e)
         {
             this.WindowState = WindowState.Minimized;
         }
-        private void TestButton_Click(object sender, EventArgs e)
+
+        // Functional Methods
+        void ReportProgress(float value)
         {
-            currentLauncherSettings.isTesting = !currentLauncherSettings.isTesting;
-            TestToggle();
-            cancellationTokenSource.Cancel();
-            cancellationTokenSource.Dispose();
-            cancellationTokenSource = new();
-            CheckGameVersionAsync();
+            //Update the UI to reflect the progress value that is passed back.
+            Download_Progress_Label.Text = " " + Math.Truncate(((value / Download_Progress.Maximum) * 100)).ToString() + "%";
+            Download_Progress.Value = value;
         }
 
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -370,15 +380,9 @@ namespace ChronicleLauncher
             });
         }
 
-        // Functional Methods
-        void ReportProgress(float value)
+        private static async Task<SVersionData> GetGameUrlAsync(string version)
         {
-            //Update the UI to reflect the progress value that is passed back.
-            Download_Progress_Label.Text = " " + Math.Truncate(((value / Download_Progress.Maximum) * 100)).ToString() + "%";
-            Download_Progress.Value = value;
-        }
-        private static async Task<string> GetGameUrlAsync(string version)
-        {
+            SVersionData gameVersionData = new();
             HttpClient versionClient = new();
             try
             {
@@ -413,7 +417,10 @@ namespace ChronicleLauncher
                         JsonNode? urlNode = jo["download_url"];
                         if (urlNode != null)
                         {
-                            return urlNode.GetValue<string>();
+                            gameVersionData.s_zipName = urlNode.GetValue<string>();
+                            int pFrom = gameVersionData.s_zipName.LastIndexOf("/") + 1;
+                            int pTo = gameVersionData.s_zipName.LastIndexOf(".");
+                            gameVersionData.s_unzipName = gameVersionData.s_zipName[pFrom..pTo]; ;
                         }
                     }
                 }
@@ -422,13 +429,12 @@ namespace ChronicleLauncher
             {
                 Console.WriteLine($"An error occurred while retrieving the file size: {ex.Message}");
             }
-            return "";
+            return gameVersionData;
         }
 
-
-        private static async Task<SLatestVersionData> GetLatestGameVersionAsync()
+        private static async Task<SVersionData> GetLatestGameVersionAsync()
         {
-            SLatestVersionData returnData = new();
+            SVersionData returnData = new();
 
             HttpClient versionClient = new()
             {
@@ -465,22 +471,23 @@ namespace ChronicleLauncher
                                 JsonNode? urlNode = latestGameVersion["url"];
                                 if (urlNode != null)
                                 {
-                                    returnData.s_zipUrl = urlNode.GetValue<string>();
-                                    int pFrom = returnData.s_zipUrl.LastIndexOf("/") + 1;
-                                    int pTo = returnData.s_zipUrl.LastIndexOf(".");
-                                    returnData.s_unzipName = returnData.s_zipUrl[pFrom..pTo];
+                                    var zipUrl = urlNode.GetValue<string>();
+                                    int pFrom = zipUrl.LastIndexOf("/") + 1;
+                                    int pTo = zipUrl.LastIndexOf(".");
+                                    returnData.s_unzipName = zipUrl[pFrom..pTo];
                                 }
 
                                 JsonNode? nameNode = latestGameVersion["name"];
                                 if (nameNode != null)
                                 {
-                                    returnData.s_versionName = nameNode.GetValue<string>();
+                                    returnData.s_versionString = nameNode.GetValue<string>();
+                                    m_versionString = returnData.s_versionString;
                                 }
 
                                 JsonNode? idNode = latestGameVersion["id"];
                                 if (idNode != null)
                                 {
-                                    returnData.s_zipUrl = await GetGameUrlAsync(idNode.GetValue<string>());
+                                    m_versionID = idNode.GetValue<string>();
                                 }
                             }
                         }
@@ -546,9 +553,9 @@ namespace ChronicleLauncher
             }
         }
 
-        private static async Task<SLatestVersionData> GetLatestLauncherVersionAsync()
+        private static async Task<SVersionData> GetLatestLauncherVersionAsync()
         {
-            SLatestVersionData returnData = new();
+            SVersionData returnData = new();
             HttpClient versionClient = new();
             try
             {
@@ -581,18 +588,10 @@ namespace ChronicleLauncher
                                 JsonNode? latestGameVersion = gameVersionArray.LastOrDefault();
                                 if (latestGameVersion != null)
                                 {
-                                    JsonNode? urlNode = latestGameVersion["url"];
-                                    if (urlNode != null)
-                                    {
-                                        returnData.s_zipUrl = urlNode.GetValue<string>();
-                                        int pFrom = returnData.s_zipUrl.LastIndexOf("/") + 1;
-                                        returnData.s_unzipName = returnData.s_zipUrl[pFrom..returnData.s_zipUrl.Length];
-                                    }
-
                                     JsonNode? nameNode = latestGameVersion["name"];
                                     if (nameNode != null)
                                     {
-                                        returnData.s_versionName = nameNode.GetValue<string>();
+                                        returnData.s_versionString = nameNode.GetValue<string>();
                                     }
                                 }
                             }
