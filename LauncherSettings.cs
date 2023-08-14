@@ -25,17 +25,18 @@ namespace ChronicleLauncher
             if (File.Exists(_filePath))
             {
                 string json = File.ReadAllText(_filePath);
-                return JsonSerializer.Deserialize<Settings>(json);
+                var settings = JsonSerializer.Deserialize<Settings>(json);
+                if (settings != null)
+                {
+                    return settings;
+                }
             }
-            else
-            {
-                return new Settings(); // Return default settings if file doesn't exist
-            }
+             return new Settings(); // Return default settings if file doesn't exist
         }
     }
 
     public class Settings
     {
-        public bool isTesting { get; set; }
+        public bool IsTesting { get; set; }
     }
 }

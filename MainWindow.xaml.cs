@@ -65,7 +65,7 @@ namespace ChronicleLauncher
             else
             {
                 currentLauncherSettings = new Settings();
-                currentLauncherSettings.isTesting = false;
+                currentLauncherSettings.IsTesting = false;
                 settingsManager.SaveSettings(currentLauncherSettings);
             }
 
@@ -141,7 +141,7 @@ namespace ChronicleLauncher
         private async void CheckGameVersionAsync()
         {
             SVersionData gameVersionData = await GetLatestGameVersionAsync();
-            string latestVersionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, (currentLauncherSettings.isTesting ? "versionTESTING" : "version"), gameVersionData.s_unzipName);
+            string latestVersionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, (currentLauncherSettings.IsTesting ? "versionTESTING" : "version"), gameVersionData.s_unzipName);
 
             if (!Directory.Exists(latestVersionPath))
             {
@@ -181,7 +181,7 @@ namespace ChronicleLauncher
 
             var progressIndicator = new Progress<float>(ReportProgress);
 
-            string tempDir = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "\\tempTESTING\\" : "\\temp\\");
+            string tempDir = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.IsTesting ? "\\tempTESTING\\" : "\\temp\\");
             Directory.CreateDirectory(tempDir);
             string downloadingFile = Path.Combine(tempDir, m_versionString + ".zip");
 
@@ -228,11 +228,11 @@ namespace ChronicleLauncher
             downloadClient.Dispose();
 
             // remove all older versions
-            if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "\\versionTESTING\\" : "\\version\\")))
+            if (Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.IsTesting ? "\\versionTESTING\\" : "\\version\\")))
             {
-                Directory.Delete(AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "\\versionTESTING\\" : "\\version\\"), true);
+                Directory.Delete(AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.IsTesting ? "\\versionTESTING\\" : "\\version\\"), true);
             }
-            var extractionLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "versionTESTING\\" : "version\\");
+            var extractionLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.IsTesting ? "versionTESTING\\" : "version\\");
             Directory.CreateDirectory(extractionLocation);
 
             string tempPath = Path.Combine(tempDir, m_versionString + ".zip");
@@ -253,7 +253,7 @@ namespace ChronicleLauncher
                 Directory.Delete(tempDir, true);
             }
 
-            m_latestExecutibleLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.isTesting ? "versionTESTING\\" : "version\\") + gameData.s_unzipName;
+            m_latestExecutibleLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.IsTesting ? "versionTESTING\\" : "version\\") + gameData.s_unzipName;
         }
 
         private void PlayButtonWrapper()
@@ -310,7 +310,7 @@ namespace ChronicleLauncher
 
         private void TestToggle()
         {
-            if (currentLauncherSettings.isTesting)
+            if (currentLauncherSettings.IsTesting)
             {
                 chronicleBaseUrl = "http://www.testing.chroniclerewritten.com/";
                 chronicleApiUrl = "http://www.testing.chroniclerewritten.com/api/";
