@@ -33,6 +33,7 @@
     <None Remove="Images\Socials\Sprite_Patreon_Logo.png" />
     <None Remove="Images\Socials\Sprite_Reddit_Logo.png" />
     <None Remove="Images\Socials\Sprite_Twitter_Logo.png" />
+    <None Remove="Images\Socials\Sprite_Twitter_Logo_X.png" />
     <None Remove="Images\Socials\Sprite_Youtube_Logo.png" />
   </ItemGroup>
 
@@ -111,6 +112,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Socials\Sprite_Twitter_Logo.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Socials\Sprite_Twitter_Logo_X.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Socials\Sprite_Youtube_Logo.png">

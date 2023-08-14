@@ -13,9 +13,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Resources;
+using System.Windows.Threading;
 
 namespace ChronicleLauncher
 {
@@ -148,7 +150,6 @@ namespace ChronicleLauncher
                 Download_Progress.Value = Download_Progress.Minimum;
                 Ready_Icon_Success.Visibility = Visibility.Collapsed;
                 Ready_Icon_Failure.Visibility = Visibility.Visible;
-                Ready_Icon_Failure_Shine.Visibility = Visibility.Visible;
 
                 readyToDownload = true;
             }
@@ -160,7 +161,6 @@ namespace ChronicleLauncher
                 Download_Progress.Value = Download_Progress.Maximum;
                 Ready_Icon_Success.Visibility = Visibility.Visible;
                 Ready_Icon_Failure.Visibility = Visibility.Collapsed;
-                Ready_Icon_Failure_Shine.Visibility = Visibility.Collapsed;
 
                 readyToDownload = false;
 
@@ -245,7 +245,6 @@ namespace ChronicleLauncher
             Download_Progress.Value = Download_Progress.Maximum;
             Ready_Icon_Success.Visibility = Visibility.Visible;
             Ready_Icon_Failure.Visibility = Visibility.Collapsed;
-            Ready_Icon_Failure_Shine.Visibility = Visibility.Collapsed;
 
             readyToDownload = false;
 
