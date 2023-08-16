@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows7.0</TargetFramework>
+    <TargetFramework>net7.0-windows10.0.17763.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Images\Ready_Icons\Icon1024.ico</ApplicationIcon>
@@ -17,9 +17,11 @@
     <None Remove="Images\Backgrounds\Splash.jpg" />
     <None Remove="Images\Backgrounds\TestingSplash.jpg" />
     <None Remove="Images\Ready_Icons\logo_header.png" />
+    <None Remove="Images\Ready_Icons\Play_Clicked.png" />
     <None Remove="Images\Ready_Icons\Play_Failure.png" />
     <None Remove="Images\Ready_Icons\Play_Failure_Shine.png" />
     <None Remove="Images\Ready_Icons\Play_Success.png" />
+    <None Remove="Images\Ready_Icons\Play_Success_Glow.png" />
     <None Remove="Images\Ready_Icons\Sprite_UI_Cursor_Normal_64_new.cur" />
     <None Remove="Images\Ready_Icons\Window_Button_Background.png" />
     <None Remove="Images\Ready_Icons\Window_Button_Single_Slot_Large.png" />
@@ -66,6 +68,9 @@
     <Resource Include="Images\Ready_Icons\logo_header.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
+    <Resource Include="Images\Ready_Icons\Play_Clicked.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
     <Resource Include="Images\Ready_Icons\Play_Failure.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
@@ -73,6 +78,9 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Play_Success.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Play_Success_Glow.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Sprite_UI_Cursor_Normal_64_new.cur">

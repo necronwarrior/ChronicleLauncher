@@ -70,24 +70,28 @@
             </WrapPanel>
         </Grid>
         <TextBlock Name="VersionText" Width="100" VerticalAlignment="Bottom" HorizontalAlignment="Right" FontSize="10" Foreground="White"/>
-        <StackPanel Orientation="Horizontal" Height="85" Width=" 410" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,150">
-            <StackPanel.Background>
-                <ImageBrush ImageSource="Images/Backgrounds/Play_Button.png" >
-                </ImageBrush>
-            </StackPanel.Background>
-            <Grid Margin="4,0,0,4" Height="70" VerticalAlignment="Center">
-                <Image Name="Ready_Icon_Success" Visibility="Collapsed" Source="Images/Ready_Icons/Play_Success.png"/>
-                <Image x:Name="Ready_Icon_Failure" Visibility="Visible"  Source="Images/Ready_Icons/Play_Failure.png"/>
-            </Grid>
-            <Grid Margin="-60,0,0,0">
-                <Button Name="Play_Button" Click="PlayButton_Click" Height="120" Width="400" Style="{StaticResource TransparentButtonStyle}" FontFamily="{StaticResource Minion Pro}" FontWeight="Bold" Margin="0,0,0,-35" Foreground="White" Background="Transparent" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
-                <local:OutlinedTextBlock x:Name="Play_Button_Text" Stroke="Black"  HorizontalAlignment="Right" Margin="0,5,0,0"
-                            ClipToBounds="True"
-                            FontSize="20" 
-                            Fill="AntiqueWhite"
-                            StrokePosition="Outside"
-                            StrokeThickness="2.5" Text=" Checking For Updates " Height="40" Width="330">
-            </local:OutlinedTextBlock>
+        <StackPanel Orientation="Horizontal" Height="151" Width="510" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,124">
+            <Grid Margin="0,28,0,0" Height="72" Width="510">
+                <Image x:Name="Buttton_Background" Visibility="Visible" Stretch="Fill" Source="Images/Backgrounds/Play_Button.png" Margin="109,-18,0,0"/>
+                <Grid Margin="0,-9,310,0" Height="68" VerticalAlignment="Top" HorizontalAlignment="Right" Width="105">
+                    <Image x:Name="Play_Success_Glow" Visibility="Collapsed" Source="/Images/Ready_Icons/Play_Success_Glow.png" Margin="-83,-56,-81,-61"/>
+                    <Image Name="Ready_Icon_Success" Visibility="Collapsed" Source="Images/Ready_Icons/Play_Success.png"/>
+                    <Image Name="Ready_Icon_Success_Clicked" Visibility="Collapsed" Source="Images/Ready_Icons/Play_Clicked.png"/>
+                    <Image x:Name="Ready_Icon_Failure" Visibility="Visible"  Source="Images/Ready_Icons/Play_Failure.png"/>
+                </Grid>
+                <Grid Margin="149,0,0,0">
+                    <local:OutlinedTextBlock x:Name="Play_Button_Text" Stroke="Black"  HorizontalAlignment="Left" Margin="35,10,0,12"
+                                ClipToBounds="True"
+                                FontSize="20" 
+                                Fill="AntiqueWhite"
+                                StrokePosition="Outside"
+                                StrokeThickness="2.5" Text=" Checking For Updates " Width="375"/>
+                    <Button Name="Play_Button" 
+                            Click="PlayButton_Click" 
+                            Style="{StaticResource TransparentButtonStyle}" 
+                            Background="Transparent" 
+                            Margin="-42,-19,2,-26"/>
+                </Grid>
             </Grid>
         </StackPanel>
 

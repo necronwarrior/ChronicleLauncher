@@ -13,11 +13,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Resources;
-using System.Windows.Threading;
 
 namespace ChronicleLauncher
 {
@@ -36,7 +33,10 @@ namespace ChronicleLauncher
         // Update this if you release a new version
         // OLD VERSIONS
         // "Launcher Alpha 1.0.0"
-        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.3";
+        // "Launcher Alpha 1.0.1"
+        // "Launcher Alpha 1.0.2"
+        // "Launcher Alpha 1.0.3"
+        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.5";
 
         private static CancellationTokenSource cancellationTokenSource = new();
         static private string m_versionID = string.Empty;
@@ -44,6 +44,7 @@ namespace ChronicleLauncher
 
         static bool isDownloading = false;
         static bool readyToDownload = false;
+        static bool readyToPlay = false;
         static string chronicleBaseUrl = "http://www.chroniclerewritten.com/";
         static string chronicleApiUrl = "http://www.chroniclerewritten.com/api/";
         private static string m_latestExecutibleLocation = string.Empty;
@@ -150,6 +151,7 @@ namespace ChronicleLauncher
                 Download_Progress.Value = Download_Progress.Minimum;
                 Ready_Icon_Success.Visibility = Visibility.Collapsed;
                 Ready_Icon_Failure.Visibility = Visibility.Visible;
+                Play_Success_Glow.Visibility = Visibility.Collapsed;
 
                 readyToDownload = true;
             }
@@ -163,6 +165,8 @@ namespace ChronicleLauncher
                 Ready_Icon_Failure.Visibility = Visibility.Collapsed;
 
                 readyToDownload = false;
+                readyToPlay = true;
+                Play_Success_Glow.Visibility = Visibility.Visible;
 
                 m_latestExecutibleLocation = latestVersionPath;
             }
@@ -170,6 +174,7 @@ namespace ChronicleLauncher
 
         private async void DownloadGameAsync()
         {
+            readyToDownload = false;
             HttpClient downloadClient = new();
 
             SVersionData gameData = await GetGameUrlAsync(m_versionID);
@@ -239,72 +244,75 @@ namespace ChronicleLauncher
             Download_Progress_Label.Text = " Extracting Files";
             System.IO.Compression.ZipFile.ExtractToDirectory(tempPath, extractionLocation);
 
-            //Update the UI to reflect the progress value that is passed back.
-            Download_Progress_Label.Text = " Chronicle Version is up to date!";
-            Play_Button_Text.Text = " Play! ";
-            Download_Progress.Value = Download_Progress.Maximum;
-            Ready_Icon_Success.Visibility = Visibility.Visible;
-            Ready_Icon_Failure.Visibility = Visibility.Collapsed;
-
-            readyToDownload = false;
-
             if (Directory.Exists(tempDir))
             {
                 Directory.Delete(tempDir, true);
             }
 
             m_latestExecutibleLocation = AppDomain.CurrentDomain.BaseDirectory + (currentLauncherSettings.IsTesting ? "versionTESTING\\" : "version\\") + gameData.s_unzipName;
+
+            CheckGameVersionAsync();
         }
 
-        private void PlayButtonWrapper()
+        private async void PlayButtonWrapper()
         {
             if (string.IsNullOrEmpty(m_latestExecutibleLocation))
                 return;
 
             Play_Button_Text.Text = " Launching Chronicle... ";
+            Ready_Icon_Success_Clicked.Visibility = Visibility.Visible;
+            Play_Success_Glow.Visibility = Visibility.Collapsed;
 
-            try
+            await Task.Run(() =>
             {
-                // Copy any prexisting decks and settings to chronicle
-                if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings")))
+                try
                 {
-                    var sourceDir = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
-                    sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Settings"));
-                }
-                if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks")))
-                {
-                    var sourceDir = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
-                    sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Decks"));
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Problem copying data from Launcher to Chronicle:" + ex.ToString());
-            }
+                    if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings")))
+                    {
+                        var sourceDir = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                        sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Settings"));
+                    }
 
-            StartChronicleAsync(m_latestExecutibleLocation).Wait();
-
-            try
-            {
-                // copy decks and settings to from chronicle version to launcher instance if they exist
-                if (Directory.Exists(Path.Combine(m_latestExecutibleLocation, "Settings")))
-                {
-                    Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
-                    var sourceDir = new DirectoryInfo(Path.Combine(m_latestExecutibleLocation, "Settings"));
-                    sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                    if (Directory.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks")))
+                    {
+                        var sourceDir = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                        sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Decks"));
+                    }
                 }
-                if (Directory.Exists(Path.Combine(m_latestExecutibleLocation, "Decks")))
+                catch (Exception ex)
                 {
-                    Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
-                    var sourceDir = new DirectoryInfo(Path.Combine(m_latestExecutibleLocation, "Decks"));
-                    sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                    Console.WriteLine("Problem copying data from Launcher to Chronicle: " + ex.ToString());
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Problem copying data from Chronicle to Launcher:" + ex.ToString());
-            }
+            });
 
+            await StartChronicleAsync(m_latestExecutibleLocation);
+
+            await Task.Run(() =>
+            {
+                try
+                {
+                    if (Directory.Exists(Path.Combine(m_latestExecutibleLocation, "Settings")))
+                    {
+                        Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                        var sourceDir = new DirectoryInfo(Path.Combine(m_latestExecutibleLocation, "Settings"));
+                        sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Settings"));
+                    }
+
+                    if (Directory.Exists(Path.Combine(m_latestExecutibleLocation, "Decks")))
+                    {
+                        Directory.CreateDirectory(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                        var sourceDir = new DirectoryInfo(Path.Combine(m_latestExecutibleLocation, "Decks"));
+                        sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Problem copying data from Chronicle to Launcher: " + ex.ToString());
+                }
+            });
+
+            Ready_Icon_Success_Clicked.Visibility = Visibility.Collapsed;
+            Play_Success_Glow.Visibility = Visibility.Visible;
             Play_Button_Text.Text = " Play! ";
         }
 
@@ -329,13 +337,14 @@ namespace ChronicleLauncher
         // Click methods
         private void PlayButton_Click(object sender, EventArgs e)
         {
+            if(readyToPlay)
+            {
+                PlayButtonWrapper();
+            }
+
             if(readyToDownload)
             {
                 DownloadGameAsync();
-            }
-            else
-            {
-                PlayButtonWrapper();
             }
         }
 
@@ -542,7 +551,6 @@ namespace ChronicleLauncher
                     var exeProcess = Process.Start(startInfo)
                         ?? throw new ArgumentException(latestExecutableLocation);
 
-                    Play_Button_Text.Text = " Chronicle Launched ";
                     await exeProcess.WaitForExitAsync().ConfigureAwait(false);
                 }
             }
@@ -565,7 +573,7 @@ namespace ChronicleLauncher
                 {
                     { "route", "getlauncherversions" }
                 };
-                //var requestData = new { route = "getlauncherversions" };
+
                 var jsonContent = JsonSerializer.Serialize(requestData);
                 var requestContent = new StringContent($"data={Uri.EscapeDataString(jsonContent)}", Encoding.UTF8, "application/x-www-form-urlencoded");
                 
