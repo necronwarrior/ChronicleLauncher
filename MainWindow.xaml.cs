@@ -27,6 +27,18 @@ namespace ChronicleLauncher
             public string s_zipName = string.Empty;
             public string s_unzipName = string.Empty;
         }
+
+        enum EHoverOverButton
+        {
+            Normal_Green,
+            Normal_Red,
+            Hover_Green,
+            Hover_Red,
+            Down_Green,
+            Down_Red
+        }
+
+        static private EHoverOverButton currentGemButton = EHoverOverButton.Normal_Green;
         /*
         static SLatestVersionData currentlatestVersionData;*/
 
@@ -36,7 +48,8 @@ namespace ChronicleLauncher
         // "Launcher Alpha 1.0.1"
         // "Launcher Alpha 1.0.2"
         // "Launcher Alpha 1.0.3"
-        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.5";
+        // "Launcher Alpha 1.0.5"
+        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.6";
 
         private static CancellationTokenSource cancellationTokenSource = new();
         static private string m_versionID = string.Empty;
@@ -48,6 +61,15 @@ namespace ChronicleLauncher
         static string chronicleBaseUrl = "http://www.chroniclerewritten.com/";
         static string chronicleApiUrl = "http://www.chroniclerewritten.com/api/";
         private static string m_latestExecutibleLocation = string.Empty;
+
+        
+        static private BitmapImage BitmapImage_Normal_Green = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Green.png"));
+        static private BitmapImage BitmapImage_Normal_Red = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Red.png"));
+        static private BitmapImage BitmapImage_Hover_Green = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Hover_Green.png"));
+        static private BitmapImage BitmapImage_Hover_Red = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Hover_Red.png"));
+        static private BitmapImage BitmapImage_Down_Green = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Down_Green.png"));
+        static private BitmapImage BitmapImage_Down_Red = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Down_Red.png"));
+
 
         private LauncherSettings settingsManager;
         private Settings currentLauncherSettings;
@@ -88,6 +110,20 @@ namespace ChronicleLauncher
             {
                 Directory.Delete(tempTestingDir, true);
             }
+        }
+
+        private void ToggleButtonVisibility(EHoverOverButton hoverOverButton)
+        {
+            switch (hoverOverButton)
+            {
+                case EHoverOverButton.Normal_Green: GemButton.Source = BitmapImage_Normal_Green; break;
+                case EHoverOverButton.Normal_Red: GemButton.Source = BitmapImage_Normal_Red; break;
+                case EHoverOverButton.Hover_Green: GemButton.Source = BitmapImage_Hover_Green; break;
+                case EHoverOverButton.Hover_Red: GemButton.Source = BitmapImage_Hover_Red; break;
+                case EHoverOverButton.Down_Green: GemButton.Source = BitmapImage_Down_Green; break;
+                case EHoverOverButton.Down_Red: GemButton.Source = BitmapImage_Down_Red; break;
+            }
+            currentGemButton = hoverOverButton;
         }
 
         // Window methods
@@ -149,24 +185,22 @@ namespace ChronicleLauncher
                 Download_Progress_Label.Text = " Click to download chronicle version:" + gameVersionData.s_versionString;
                 Play_Button_Text.Text = " New version available! ";
                 Download_Progress.Value = Download_Progress.Minimum;
-                Ready_Icon_Success.Visibility = Visibility.Collapsed;
-                Ready_Icon_Failure.Visibility = Visibility.Visible;
-                Play_Success_Glow.Visibility = Visibility.Collapsed;
+
+                ToggleButtonVisibility(EHoverOverButton.Normal_Red);
 
                 readyToDownload = true;
             }
-            else 
-            { 
+            else
+            {
                 //Update the UI to reflect the progress value that is passed back.
                 Download_Progress_Label.Text = " Chronicle Version is up to date!";
                 Play_Button_Text.Text = " Play! ";
                 Download_Progress.Value = Download_Progress.Maximum;
-                Ready_Icon_Success.Visibility = Visibility.Visible;
-                Ready_Icon_Failure.Visibility = Visibility.Collapsed;
+
+                ToggleButtonVisibility(EHoverOverButton.Normal_Green);
 
                 readyToDownload = false;
                 readyToPlay = true;
-                Play_Success_Glow.Visibility = Visibility.Visible;
 
                 m_latestExecutibleLocation = latestVersionPath;
             }
@@ -259,9 +293,7 @@ namespace ChronicleLauncher
             if (string.IsNullOrEmpty(m_latestExecutibleLocation))
                 return;
 
-            Play_Button_Text.Text = " Launching Chronicle... ";
-            Ready_Icon_Success_Clicked.Visibility = Visibility.Visible;
-            Play_Success_Glow.Visibility = Visibility.Collapsed;
+            Play_Button_Text.Text = " Running Chronicle... ";
 
             await Task.Run(() =>
             {
@@ -310,9 +342,6 @@ namespace ChronicleLauncher
                     Console.WriteLine("Problem copying data from Chronicle to Launcher: " + ex.ToString());
                 }
             });
-
-            Ready_Icon_Success_Clicked.Visibility = Visibility.Collapsed;
-            Play_Success_Glow.Visibility = Visibility.Visible;
             Play_Button_Text.Text = " Play! ";
         }
 
@@ -335,14 +364,15 @@ namespace ChronicleLauncher
         }
 
         // Click methods
+
         private void PlayButton_Click(object sender, EventArgs e)
         {
-            if(readyToPlay)
+            if (readyToPlay)
             {
                 PlayButtonWrapper();
             }
 
-            if(readyToDownload)
+            if (readyToDownload)
             {
                 DownloadGameAsync();
             }
@@ -576,7 +606,7 @@ namespace ChronicleLauncher
 
                 var jsonContent = JsonSerializer.Serialize(requestData);
                 var requestContent = new StringContent($"data={Uri.EscapeDataString(jsonContent)}", Encoding.UTF8, "application/x-www-form-urlencoded");
-                
+
                 HttpResponseMessage response = await versionClient.PostAsync("", requestContent);
 
                 if (response.IsSuccessStatusCode)
@@ -613,6 +643,45 @@ namespace ChronicleLauncher
             versionClient.Dispose();
 
             return returnData;
+        }
+
+        private void GemButtonMouseOver(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            switch (currentGemButton)
+            {
+                case EHoverOverButton.Normal_Green: ToggleButtonVisibility(EHoverOverButton.Hover_Green); break;
+                case EHoverOverButton.Normal_Red: ToggleButtonVisibility(EHoverOverButton.Hover_Red); break;
+            }
+        }
+
+        private void GemButtonMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            switch (currentGemButton)
+            {
+                case EHoverOverButton.Hover_Green: ToggleButtonVisibility(EHoverOverButton.Normal_Green); break;
+                case EHoverOverButton.Hover_Red: ToggleButtonVisibility(EHoverOverButton.Normal_Red); break;
+                case EHoverOverButton.Down_Green: ToggleButtonVisibility(EHoverOverButton.Normal_Green); break;
+                case EHoverOverButton.Down_Red: ToggleButtonVisibility(EHoverOverButton.Normal_Red); break;
+            }
+        }
+
+        private void GemButtonMouseUp(object sender, EventArgs e)
+        {
+            switch (currentGemButton)
+            {
+                case EHoverOverButton.Down_Green: ToggleButtonVisibility(EHoverOverButton.Hover_Green); break;
+                case EHoverOverButton.Down_Red: ToggleButtonVisibility(EHoverOverButton.Hover_Red); break;
+            }
+        }
+
+        private void GemButtonMouseDown(object sender, EventArgs e)
+        {
+            switch (currentGemButton)
+            {
+                case EHoverOverButton.Hover_Green: ToggleButtonVisibility(EHoverOverButton.Down_Green); break;
+                case EHoverOverButton.Hover_Red: ToggleButtonVisibility(EHoverOverButton.Down_Red); break;
+            }
+            PlayButton_Click(sender, e);
         }
     }
 }

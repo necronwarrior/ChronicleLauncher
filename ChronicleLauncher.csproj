@@ -23,6 +23,12 @@
     <None Remove="Images\Ready_Icons\Play_Success.png" />
     <None Remove="Images\Ready_Icons\Play_Success_Glow.png" />
     <None Remove="Images\Ready_Icons\Sprite_UI_Cursor_Normal_64_new.cur" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Diamond_Button_Down_Green.png" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Diamond_Button_Down_Red.png" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Diamond_Button_Hover_Green.png" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Diamond_Button_Hover_Red.png" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Diamond_Button_Normal_Green.png" />
+    <None Remove="Images\Ready_Icons\Sprite_UI_Diamond_Button_Normal_Red.png" />
     <None Remove="Images\Ready_Icons\Window_Button_Background.png" />
     <None Remove="Images\Ready_Icons\Window_Button_Single_Slot_Large.png" />
     <None Remove="Images\Ready_Icons\Window_Close.png" />
@@ -68,22 +74,25 @@
     <Resource Include="Images\Ready_Icons\logo_header.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-    <Resource Include="Images\Ready_Icons\Play_Clicked.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\Ready_Icons\Play_Failure.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\Ready_Icons\Play_Failure_Shine.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\Ready_Icons\Play_Success.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <Resource Include="Images\Ready_Icons\Play_Success_Glow.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
     <Resource Include="Images\Ready_Icons\Sprite_UI_Cursor_Normal_64_new.cur">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Diamond_Button_Down_Green.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Diamond_Button_Down_Red.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Diamond_Button_Hover_Green.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Diamond_Button_Hover_Red.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Diamond_Button_Normal_Green.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\Ready_Icons\Sprite_UI_Diamond_Button_Normal_Red.png">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
     <Resource Include="Images\Ready_Icons\Window_Button_Background.png">

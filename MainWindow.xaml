@@ -8,7 +8,6 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         ResizeMode="NoResize"
-        MouseDown="Window_MouseDown"
         ContentRendered="Window_ContentRendered"
         Closing="Window_Closing"
         Title="Launcher" Height="480" Width="925">
@@ -62,7 +61,7 @@
         </Style>
     </Window.Resources>
     <Grid>
-        <Image Name="SplashBackground" Stretch="Fill" Source="Images/Backgrounds/Splash.jpg" HorizontalAlignment="Right"/>
+        <Image Name="SplashBackground" Stretch="Fill" MouseDown="Window_MouseDown" Source="Images/Backgrounds/Splash.jpg" HorizontalAlignment="Right"/>
         <Grid>
             <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Top" Height="30" Width="Auto">
                 <Button Width="30" Height="30" Foreground="AntiqueWhite" BorderThickness="0" Background="Transparent" FontSize="20" Margin="0,0,0,0" Click="MinimiseButton_Click">_</Button>
@@ -73,12 +72,7 @@
         <StackPanel Orientation="Horizontal" Height="151" Width="510" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,0,124">
             <Grid Margin="0,28,0,0" Height="72" Width="510">
                 <Image x:Name="Buttton_Background" Visibility="Visible" Stretch="Fill" Source="Images/Backgrounds/Play_Button.png" Margin="109,-18,0,0"/>
-                <Grid Margin="0,-9,310,0" Height="68" VerticalAlignment="Top" HorizontalAlignment="Right" Width="105">
-                    <Image x:Name="Play_Success_Glow" Visibility="Collapsed" Source="/Images/Ready_Icons/Play_Success_Glow.png" Margin="-83,-56,-81,-61"/>
-                    <Image Name="Ready_Icon_Success" Visibility="Collapsed" Source="Images/Ready_Icons/Play_Success.png"/>
-                    <Image Name="Ready_Icon_Success_Clicked" Visibility="Collapsed" Source="Images/Ready_Icons/Play_Clicked.png"/>
-                    <Image x:Name="Ready_Icon_Failure" Visibility="Visible"  Source="Images/Ready_Icons/Play_Failure.png"/>
-                </Grid>
+
                 <Grid Margin="149,0,0,0">
                     <local:OutlinedTextBlock x:Name="Play_Button_Text" Stroke="Black"  HorizontalAlignment="Left" Margin="35,10,0,12"
                                 ClipToBounds="True"
@@ -90,7 +84,16 @@
                             Click="PlayButton_Click" 
                             Style="{StaticResource TransparentButtonStyle}" 
                             Background="Transparent" 
-                            Margin="-42,-19,2,-26"/>
+                            Margin="-41,-18,2,-26"/>
+                </Grid>
+                <Grid Margin="0,-9,310,0" Height="68" VerticalAlignment="Top" HorizontalAlignment="Right" Width="105">
+                    <Image x:Name="GemButton" 
+                           Visibility="Visible" 
+                           MouseEnter="GemButtonMouseOver" 
+                           MouseLeave="GemButtonMouseLeave" 
+                           MouseDown="GemButtonMouseDown" 
+                           MouseUp="GemButtonMouseUp" 
+                           Source="Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Red.png"/>
                 </Grid>
             </Grid>
         </StackPanel>
