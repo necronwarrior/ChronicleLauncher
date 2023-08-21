@@ -159,5 +159,12 @@
             </Hyperlink>
             </TextBlock>
         </Grid>
+        <TextBox x:Name="ErrorOutput" 
+                 Background="Transparent"
+                 Foreground="Red"
+                 BorderThickness="0"
+                 Text=""
+                 IsReadOnly="True"
+                 TextWrapping="Wrap" Margin="0,0,606,382" />
     </Grid>
 </Window>

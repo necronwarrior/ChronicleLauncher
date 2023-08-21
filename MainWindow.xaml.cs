@@ -12,7 +12,9 @@ using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 
@@ -51,7 +53,7 @@ namespace ChronicleLauncher
         // "Launcher Alpha 1.0.5"
         private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.6";
 
-        private static CancellationTokenSource cancellationTokenSource = new();
+        private static readonly CancellationTokenSource cancellationTokenSource = new();
         static private string m_versionID = string.Empty;
         static private string m_versionString = string.Empty;
 
@@ -61,22 +63,23 @@ namespace ChronicleLauncher
         static string chronicleBaseUrl = "http://www.chroniclerewritten.com/";
         static string chronicleApiUrl = "http://www.chroniclerewritten.com/api/";
         private static string m_latestExecutibleLocation = string.Empty;
+        private static int versionFetchTimeoutMilliseconds = 600000; // Timeout duration in milliseconds (10 mins)
 
-        
-        static private BitmapImage BitmapImage_Normal_Green = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Green.png"));
-        static private BitmapImage BitmapImage_Normal_Red = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Red.png"));
-        static private BitmapImage BitmapImage_Hover_Green = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Hover_Green.png"));
-        static private BitmapImage BitmapImage_Hover_Red = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Hover_Red.png"));
-        static private BitmapImage BitmapImage_Down_Green = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Down_Green.png"));
-        static private BitmapImage BitmapImage_Down_Red = new BitmapImage(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Down_Red.png"));
+        private static readonly BitmapImage BitmapImage_Normal_Green = new(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Green.png"));
+        private static readonly BitmapImage BitmapImage_Normal_Red = new(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Normal_Red.png"));
+        private static readonly BitmapImage BitmapImage_Hover_Green = new(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Hover_Green.png"));
+        private static readonly BitmapImage BitmapImage_Hover_Red = new(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Hover_Red.png"));
+        private static readonly BitmapImage BitmapImage_Down_Green = new(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Down_Green.png"));
+        private static readonly BitmapImage BitmapImage_Down_Red = new(new Uri("pack://application:,,,/ChronicleLauncher;component/Images/Ready_Icons/Sprite_UI_Diamond_Button_Down_Red.png"));
 
-
-        private LauncherSettings settingsManager;
-        private Settings currentLauncherSettings;
+        static private TextBox? errorOutput;
+        private readonly LauncherSettings settingsManager;
+        private readonly Settings currentLauncherSettings;
         public MainWindow()
         {
             InitializeComponent();
 
+            errorOutput = ErrorOutput; 
             VersionText.Text = CURRENT_VERSION;
 
             var settingsFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcherSettings.json");
@@ -87,8 +90,10 @@ namespace ChronicleLauncher
             }
             else
             {
-                currentLauncherSettings = new Settings();
-                currentLauncherSettings.IsTesting = false;
+                currentLauncherSettings = new Settings
+                {
+                    IsTesting = false
+                };
                 settingsManager.SaveSettings(currentLauncherSettings);
             }
 
@@ -126,6 +131,17 @@ namespace ChronicleLauncher
             currentGemButton = hoverOverButton;
         }
 
+        private static void LogError(string errorMessage)
+        {
+            Console.WriteLine("ERROR: " + errorMessage);
+            if (errorOutput != null)
+            {
+                errorOutput.Background = new SolidColorBrush(Color.FromArgb(0xAA, 0xFF, 0xFF, 0xFF));
+                errorOutput.Text += "ERROR: " + errorMessage + "\n";
+                errorOutput.Text += "ERROR: " + errorMessage + "\n";
+            }
+        }
+
         // Window methods
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
@@ -149,7 +165,18 @@ namespace ChronicleLauncher
 
         private async void Window_ContentRendered(object sender, EventArgs e)
         {
-            SVersionData latestLauncherVersionData = await GetLatestLauncherVersionAsync();
+            SVersionData latestLauncherVersionData;
+
+            // Call an asynchronous function with a timeout
+            try
+            {
+                latestLauncherVersionData = await ExecuteWithTimeoutAsync(GetLatestLauncherVersionAsync(), versionFetchTimeoutMilliseconds);
+            }
+            catch (TimeoutException)
+            {
+                LogError("Retrieving launcher version timed out.");
+                return;
+            }
 
             if (latestLauncherVersionData.s_versionString != string.Empty &&
                 latestLauncherVersionData.s_versionString != CURRENT_VERSION)
@@ -177,7 +204,19 @@ namespace ChronicleLauncher
 
         private async void CheckGameVersionAsync()
         {
-            SVersionData gameVersionData = await GetLatestGameVersionAsync();
+            SVersionData gameVersionData;
+
+            // Call an asynchronous function with a timeout
+            try
+            {
+                gameVersionData = await ExecuteWithTimeoutAsync(GetLatestGameVersionAsync(), versionFetchTimeoutMilliseconds);
+            }
+            catch (TimeoutException)
+            {
+                LogError("Retrieving game version timed out.");
+                return;
+            }
+
             string latestVersionPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, (currentLauncherSettings.IsTesting ? "versionTESTING" : "version"), gameVersionData.s_unzipName);
 
             if (!Directory.Exists(latestVersionPath))
@@ -258,7 +297,7 @@ namespace ChronicleLauncher
                     }
                     else
                     {
-                        Console.WriteLine("Download failed due to unexpected error: " + exception);
+                        LogError("Download failed due to unexpected error: " + exception);
                     }
                 }
 
@@ -294,6 +333,8 @@ namespace ChronicleLauncher
                 return;
 
             Play_Button_Text.Text = " Running Chronicle... ";
+            ToggleButtonVisibility(EHoverOverButton.Normal_Red);
+            readyToPlay = false;
 
             await Task.Run(() =>
             {
@@ -311,9 +352,9 @@ namespace ChronicleLauncher
                         sourceDir.DeepCopy(Path.Combine(m_latestExecutibleLocation, "Decks"));
                     }
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
-                    Console.WriteLine("Problem copying data from Launcher to Chronicle: " + ex.ToString());
+                    LogError("Problem copying data from Launcher to Chronicle: " + ex.ToString());
                 }
             });
 
@@ -337,12 +378,14 @@ namespace ChronicleLauncher
                         sourceDir.DeepCopy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decks"));
                     }
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
-                    Console.WriteLine("Problem copying data from Chronicle to Launcher: " + ex.ToString());
+                    LogError("Problem copying data from Chronicle to Launcher: " + ex.ToString());
                 }
             });
             Play_Button_Text.Text = " Play! ";
+            ToggleButtonVisibility(EHoverOverButton.Normal_Green);
+            readyToPlay = true;
         }
 
         private void TestToggle()
@@ -463,15 +506,16 @@ namespace ChronicleLauncher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Console.WriteLine($"An error occurred while retrieving the file size: {ex.Message}");
+                LogError($"An error occurred while retrieving the file size: {ex.Message}");
             }
             return gameVersionData;
         }
 
         private static async Task<SVersionData> GetLatestGameVersionAsync()
         {
+            Thread.Sleep(2000);
             SVersionData returnData = new();
 
             HttpClient versionClient = new()
@@ -553,15 +597,15 @@ namespace ChronicleLauncher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Console.WriteLine($"An error occurred while retrieving the file size: {ex.Message}");
+                LogError($"An error occurred while retrieving the file size: {ex.Message}");
             }
 
             return -1; // Return -1 if the file size couldn't be retrieved
         }
 
-        private async Task StartChronicleAsync(string latestExecutableLocation)
+        private static async Task StartChronicleAsync(string latestExecutableLocation)
         {
             // Use ProcessStartInfo class
             var startInfo = new ProcessStartInfo
@@ -584,9 +628,9 @@ namespace ChronicleLauncher
                     await exeProcess.WaitForExitAsync().ConfigureAwait(false);
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Console.WriteLine("Problem launching Chronicle: " + ex.ToString());
+                LogError("Problem launching Chronicle: " + ex.ToString());
             }
         }
 
@@ -636,13 +680,29 @@ namespace ChronicleLauncher
                     }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Console.WriteLine($"An error occurred while retrieving the file size: {ex.Message}");
+                LogError($"An error occurred while retrieving the file size: {ex.Message}");
             }
             versionClient.Dispose();
 
             return returnData;
+        }
+        static async Task<SVersionData> ExecuteWithTimeoutAsync(Task<SVersionData> asyncFunction, int timeoutMilliseconds)
+        {
+            using var timeoutCancellationTokenSource = new CancellationTokenSource();
+            Task timeoutTask = Task.Delay(timeoutMilliseconds, timeoutCancellationTokenSource.Token);
+
+            // Use Task.WhenAny to await any of the tasks
+            Task completedTask = await Task.WhenAny(asyncFunction, timeoutTask);
+
+            if (completedTask == timeoutTask)
+            {
+                throw new TimeoutException();
+            }
+
+            timeoutCancellationTokenSource.Cancel();
+            return await ((Task<SVersionData>)completedTask);
         }
 
         private void GemButtonMouseOver(object sender, System.Windows.Input.MouseEventArgs e)
@@ -672,6 +732,7 @@ namespace ChronicleLauncher
                 case EHoverOverButton.Down_Green: ToggleButtonVisibility(EHoverOverButton.Hover_Green); break;
                 case EHoverOverButton.Down_Red: ToggleButtonVisibility(EHoverOverButton.Hover_Red); break;
             }
+            PlayButton_Click(sender, e);
         }
 
         private void GemButtonMouseDown(object sender, EventArgs e)
@@ -681,7 +742,6 @@ namespace ChronicleLauncher
                 case EHoverOverButton.Hover_Green: ToggleButtonVisibility(EHoverOverButton.Down_Green); break;
                 case EHoverOverButton.Hover_Red: ToggleButtonVisibility(EHoverOverButton.Down_Red); break;
             }
-            PlayButton_Click(sender, e);
         }
     }
 }
