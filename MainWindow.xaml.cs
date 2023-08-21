@@ -51,7 +51,8 @@ namespace ChronicleLauncher
         // "Launcher Alpha 1.0.2"
         // "Launcher Alpha 1.0.3"
         // "Launcher Alpha 1.0.5"
-        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.6";
+        // "Launcher Alpha 1.0.6"
+        private static readonly string CURRENT_VERSION = "Launcher Alpha 1.0.7";
 
         private static readonly CancellationTokenSource cancellationTokenSource = new();
         static private string m_versionID = string.Empty;
